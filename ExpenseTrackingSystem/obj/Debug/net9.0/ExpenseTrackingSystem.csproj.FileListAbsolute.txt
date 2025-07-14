@@ -473,3 +473,5 @@
 /Users/aditirajesh/Desktop/CapstoneProject-ETS/ExpenseTrackingSystem/obj/Debug/net9.0/ExpenseTrackingSystem.pdb
 /Users/aditirajesh/Desktop/CapstoneProject-ETS/ExpenseTrackingSystem/obj/Debug/net9.0/ExpenseTrackingSystem.genruntimeconfig.cache
 /Users/aditirajesh/Desktop/CapstoneProject-ETS/ExpenseTrackingSystem/obj/Debug/net9.0/ref/ExpenseTrackingSystem.dll
+/Users/aditirajesh/Desktop/CapstoneProject-ETS/ExpenseTrackingSystem/obj/Debug/net9.0/ExpenseTrackingSystem.sourcelink.json
+/Users/aditirajesh/Desktop/CapstoneProject-ETS/ExpenseTrackingSystem/bin/Debug/net9.0/Azure.Security.KeyVault.Secrets.dll
