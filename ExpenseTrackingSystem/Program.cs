@@ -61,7 +61,6 @@ builder.Services.AddSwaggerGen(opt =>
 builder.Host.UseSerilog((context, configuration) =>
 {
     var isDevelopment = context.HostingEnvironment.IsDevelopment();
-    var azureStorageConnectionString = context.Configuration.GetConnectionString("AzureStorage");
 
     configuration
         .ReadFrom.Configuration(context.Configuration)
@@ -88,35 +87,6 @@ builder.Host.UseSerilog((context, configuration) =>
         retainedFileCountLimit: 30,
         outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}");
 
-    if (!string.IsNullOrEmpty(azureStorageConnectionString))
-    {
-        try
-        {
-            configuration.WriteTo.AzureBlobStorage(
-                connectionString: azureStorageConnectionString,
-                storageContainerName: "log-files",
-                storageFileName: "application/{yyyy}/{MM}/{dd}/expense-tracking-{HH}.log",
-                restrictedToMinimumLevel: LogEventLevel.Information,
-                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}");
-
-            configuration.WriteTo.AzureBlobStorage(
-                connectionString: azureStorageConnectionString,
-                storageContainerName: "log-files",
-                storageFileName: "errors/{yyyy}/{MM}/{dd}/errors-{HH}.log",
-                restrictedToMinimumLevel: LogEventLevel.Warning,
-                outputTemplate: "[{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Level:u3}] {SourceContext}: {Message:lj} {Properties:j}{NewLine}{Exception}");
-
-            Log.Information("Azure Blob Storage logging configured successfully");
-        }
-        catch (Exception ex)
-        {
-            Log.Warning(ex, "Failed to configure Azure Blob Storage logging, continuing with local logging only");
-        }
-    }
-    else
-    {
-        Log.Warning("Azure Storage connection string not found, using local logging only");
-    }
 });
 
 builder.Services.AddCors(options =>
@@ -149,15 +119,12 @@ builder.Services.AddControllers()
                     opts.JsonSerializerOptions.DefaultIgnoreCondition = JsonIgnoreCondition.WhenWritingNull;
                 });
 
-var keyVaultUrl = builder.Configuration["AzureBlob:KeyVaultUrl"];
-SecretClient secretClient = new SecretClient(new Uri(keyVaultUrl), new DefaultAzureCredential());
-KeyVaultSecret secret = secretClient.GetSecretAsync("DatabaseConnString").GetAwaiter().GetResult();
-var connectionString = secret.Value;
 
 builder.Services.AddDbContext<ExpenseContext>(opts =>
 {
-    opts.UseNpgsql(connectionString);
+    opts.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"));
 });
+
 
 #region  Repositories
 builder.Services.AddTransient<IRepository<Guid, AuditLog>, AuditRepository>();
