@@ -19,6 +19,7 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   successMessage = '';
 
+  
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
@@ -35,7 +36,10 @@ export class LoginComponent implements OnInit {
       ]],
     });
   }
-
+  signInWithGoogle() {
+    window.location.href = 'http://localhost:5295/auth/google-login';  
+  }
+  
   emailValidator(control: AbstractControl) {
     if (!control.value) return null;
     const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;

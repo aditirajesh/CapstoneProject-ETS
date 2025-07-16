@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj": {}
+    "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj": {}
   },
   "projects": {
-    "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj": {
+    "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj",
+        "projectUniqueName": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj",
         "projectName": "ExpenseTrackingSystem.UnitTests",
-        "projectPath": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj",
-        "packagesPath": "/Users/aditirajesh/.nuget/packages/",
-        "outputPath": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem.UnitTests/obj/",
+        "projectPath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj",
+        "packagesPath": "/Users/vaishal/.nuget/packages/",
+        "outputPath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/aditirajesh/.nuget/NuGet/NuGet.Config"
+          "/Users/vaishal/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -26,8 +26,8 @@
           "net9.0": {
             "targetAlias": "net9.0",
             "projectReferences": {
-              "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj": {
-                "projectPath": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj"
+              "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj": {
+                "projectPath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj"
               }
             }
           }
@@ -42,7 +42,7 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0": {
@@ -97,21 +97,21 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
         }
       }
     },
-    "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj": {
+    "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj",
+        "projectUniqueName": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj",
         "projectName": "ExpenseTrackingSystem",
-        "projectPath": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj",
-        "packagesPath": "/Users/aditirajesh/.nuget/packages/",
-        "outputPath": "/Users/aditirajesh/Desktop/GenSpark-Training/BackendProject/ExpenseTrackingSystem/obj/",
+        "projectPath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/ExpenseTrackingSystem.csproj",
+        "packagesPath": "/Users/vaishal/.nuget/packages/",
+        "outputPath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "/Users/aditirajesh/.nuget/NuGet/NuGet.Config"
+          "/Users/vaishal/.nuget/NuGet/NuGet.Config"
         ],
         "originalTargetFrameworks": [
           "net9.0"
@@ -135,19 +135,27 @@
           "auditLevel": "low",
           "auditMode": "direct"
         },
-        "SdkAnalysisLevel": "9.0.300"
+        "SdkAnalysisLevel": "9.0.100"
       },
       "frameworks": {
         "net9.0": {
           "targetAlias": "net9.0",
           "dependencies": {
+            "Azure.Identity": {
+              "target": "Package",
+              "version": "[1.14.2, )"
+            },
+            "Azure.Security.KeyVault.Secrets": {
+              "target": "Package",
+              "version": "[4.8.0, )"
+            },
             "BCrypt.Net-Next": {
               "target": "Package",
               "version": "[4.0.3, )"
             },
-            "Microsoft.AspNet.SignalR": {
+            "Microsoft.AspNetCore.Authentication.Google": {
               "target": "Package",
-              "version": "[2.4.3, )"
+              "version": "[9.0.7, )"
             },
             "Microsoft.AspNetCore.Authentication.JwtBearer": {
               "target": "Package",
@@ -156,6 +164,10 @@
             "Microsoft.AspNetCore.OpenApi": {
               "target": "Package",
               "version": "[9.0.5, )"
+            },
+            "Microsoft.AspNetCore.SignalR": {
+              "target": "Package",
+              "version": "[1.2.0, )"
             },
             "Microsoft.EntityFrameworkCore": {
               "target": "Package",
@@ -174,6 +186,10 @@
             "Serilog.AspNetCore": {
               "target": "Package",
               "version": "[9.0.0, )"
+            },
+            "Serilog.Sinks.AzureBlobStorage": {
+              "target": "Package",
+              "version": "[4.0.5, )"
             },
             "Serilog.Sinks.Console": {
               "target": "Package",
@@ -211,7 +227,7 @@
               "privateAssets": "all"
             }
           },
-          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.300/PortableRuntimeIdentifierGraph.json"
+          "runtimeIdentifierGraphPath": "/usr/local/share/dotnet/sdk/9.0.108/PortableRuntimeIdentifierGraph.json"
         }
       }
     }

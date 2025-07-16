@@ -18,6 +18,9 @@ using System.Text.Json;
 using System.Text.Json.Serialization;
 using Azure.Identity;
 using Azure.Security.KeyVault.Secrets;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authentication;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -139,7 +142,7 @@ builder.Services.AddTransient<IReceiptService, ReceiptService>();
 builder.Services.AddTransient<IUserService, UserService>();
 builder.Services.AddTransient<IEncryptionService, EncryptionService>();
 builder.Services.AddTransient<ITokenService, TokenService>();
-builder.Services.AddTransient<IAuthenticationService, AuthenticationService>();
+builder.Services.AddTransient<ExpenseTrackingSystem.Interfaces.IAuthenticationService, ExpenseTrackingSystem.Services.AuthenticationService>();
 builder.Services.AddTransient<IAuditLogService, AuditLogService>();
 builder.Services.AddTransient<IReportService, ReportService>();
 #endregion
@@ -152,18 +155,63 @@ builder.Services.AddSingleton<UserMapper>();
 #endregion
 
 #region AuthenticationFilter
-builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-                .AddJwtBearer(options =>
-                {
-                    options.TokenValidationParameters = new TokenValidationParameters
-                    {
-                        ValidateAudience = false,
-                        ValidateIssuer = false,
-                        ValidateLifetime = true,
-                        ValidateIssuerSigningKey = true,
-                        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Keys:JwtTokenKey"]))
-                    };
-                });
+// builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+//                 .AddJwtBearer(options =>
+//                 {
+//                     options.TokenValidationParameters = new TokenValidationParameters
+//                     {
+//                         ValidateAudience = false,
+//                         ValidateIssuer = false,
+//                         ValidateLifetime = true,
+//                         ValidateIssuerSigningKey = true,
+//                         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Keys:JwtTokenKey"]))
+//                     };
+//                 });
+
+builder.Services.AddAuthentication(options =>
+{
+    options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultSignInScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+})
+.AddJwtBearer(options =>
+{
+    options.TokenValidationParameters = new TokenValidationParameters
+    {
+        ValidateAudience = false,
+        ValidateIssuer = false,
+        ValidateLifetime = true,
+        ValidateIssuerSigningKey = true,
+        IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Keys:JwtTokenKey"])),
+        // RoleClaimType=ClaimTypes.Role
+    };
+})
+.AddCookie(options =>
+{
+    options.Cookie.SameSite = SameSiteMode.Lax; // allows Google to redirect back
+    options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+    options.Cookie.HttpOnly = true;
+})
+
+.AddGoogle("Google", options =>
+{
+    options.ClientId = builder.Configuration["Authentication:Google:ClientId"];
+    options.ClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+    options.CallbackPath = "/signin-google";
+
+    options.Scope.Add("profile");
+    options.Scope.Add("email");
+
+    options.SaveTokens = true;
+    options.ClaimActions.MapJsonKey("urn:google:picture", "picture", "url");
+    options.Events.OnCreatingTicket = context =>
+    {
+        var email = context.Identity?.FindFirst(ClaimTypes.Email)?.Value;
+        var name = context.Identity?.FindFirst(ClaimTypes.Name)?.Value;
+
+        return Task.CompletedTask;
+    };
+});
 #endregion
 
 #region RateLimiter

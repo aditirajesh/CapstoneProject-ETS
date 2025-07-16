@@ -13,8 +13,11 @@ import { AdminGuard } from './admin.guard';
 import { RoleRedirectGuard } from './role-redirect.guard';
 import { SignupComponent } from './signup/signup';
 import { Landing } from './landing/landing';
+import { OauthCallback } from './pages/oauth-callbacl/oauth-callback/oauth-callback';
 
 export const routes: Routes = [
+  // callback page for oauth
+  {path:'oauth-callback',component:OauthCallback},
   // Default route - redirect based on authentication
   { 
     path: '', 
