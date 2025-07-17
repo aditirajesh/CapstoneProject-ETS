@@ -9,5 +9,8 @@ namespace ExpenseTrackingSystem.Interfaces
         Task<List<TimeBasedReportDto>> GetTimeBasedReportAsync(string requestingUser, DateTime startDate, DateTime endDate, string? targetUsername = null, string groupBy = "month");
         Task<List<TopExpenseDto>> GetTopExpensesAsync(string requestingUser, DateTime startDate, DateTime endDate, string? targetUsername = null, int limit = 10);
         Task<DetailedReportDto> GetDetailedReportAsync(string requestingUser, ReportRequestDto request);
+
+        Task SendSummaryReportToEmailAsync(string requestingUser, string recipientEmail, int lastNDays = 30);
+
     }
 }

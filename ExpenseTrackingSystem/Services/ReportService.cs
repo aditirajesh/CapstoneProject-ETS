@@ -2,6 +2,7 @@ using ExpenseTrackingSystem.Models.DTOs;
 using ExpenseTrackingSystem.Models;
 using ExpenseTrackingSystem.Interfaces;
 using Microsoft.Extensions.Logging;
+using System.Text;
 
 namespace ExpenseTrackingSystem.Services
 {
@@ -10,23 +11,26 @@ namespace ExpenseTrackingSystem.Services
         private readonly IExpenseService _expenseService;
         private readonly IUserService _userService;
         private readonly IAuditLogService _auditService;
-        private readonly ILogger<ReportService> _logger; 
+        private readonly ILogger<ReportService> _logger;
+        private readonly IEmailService _emailService;
 
         public ReportService(
             IExpenseService expenseService,
             IUserService userService,
             IAuditLogService auditService,
-            ILogger<ReportService> logger) 
+            IEmailService emailService,
+            ILogger<ReportService> logger)
         {
             _expenseService = expenseService;
             _userService = userService;
             _auditService = auditService;
-            _logger = logger; 
+            _logger = logger;
+            _emailService = emailService;
         }
 
         public async Task<ReportSummaryDto> GetQuickSummaryAsync(string requestingUser, string? targetUsername = null, int lastNDays = 30)
         {
-            using var scope = _logger.BeginScope("QuickSummary for {RequestingUser} targeting {TargetUser} for {Days} days", 
+            using var scope = _logger.BeginScope("QuickSummary for {RequestingUser} targeting {TargetUser} for {Days} days",
                 requestingUser, targetUsername ?? requestingUser, lastNDays);
 
             _logger.LogInformation("Starting quick summary report generation for {LastNDays} days", lastNDays);
@@ -60,7 +64,7 @@ namespace ExpenseTrackingSystem.Services
             var allExpenses = await _expenseService.SearchExpense(searchModel);
             var expenses = allExpenses.Where(e => e.Username == targetUser).ToList();
 
-            _logger.LogInformation("Found {ExpenseCount} expenses for user {TargetUser} in the specified date range", 
+            _logger.LogInformation("Found {ExpenseCount} expenses for user {TargetUser} in the specified date range",
                 expenses.Count, targetUser);
 
             if (!expenses.Any())
@@ -82,12 +86,12 @@ namespace ExpenseTrackingSystem.Services
             var categoryGroups = expenses.GroupBy(e => e.Category).ToList();
             var topCategory = categoryGroups.OrderByDescending(g => g.Sum(e => e.Amount)).FirstOrDefault();
 
-            _logger.LogDebug("Summary calculated: Total={TotalAmount}, Average={AverageAmount}, TopCategory={TopCategory}", 
-                totalAmount, 
+            _logger.LogDebug("Summary calculated: Total={TotalAmount}, Average={AverageAmount}, TopCategory={TopCategory}",
+                totalAmount,
                 expenses.Count > 0 ? totalAmount / expenses.Count : 0,
                 topCategory?.Key ?? "N/A");
 
-            _logger.LogInformation("Successfully generated quick summary report for user {TargetUser} with {ExpenseCount} expenses totaling {TotalAmount}", 
+            _logger.LogInformation("Successfully generated quick summary report for user {TargetUser} with {ExpenseCount} expenses totaling {TotalAmount}",
                 targetUser, expenses.Count, totalAmount);
 
             return new ReportSummaryDto
@@ -108,7 +112,7 @@ namespace ExpenseTrackingSystem.Services
 
         public async Task<List<CategoryBreakdownDto>> GetCategoryBreakdownAsync(string requestingUser, DateTime startDate, DateTime endDate, string? targetUsername = null)
         {
-            using var scope = _logger.BeginScope("CategoryBreakdown for {RequestingUser} targeting {TargetUser} from {StartDate} to {EndDate}", 
+            using var scope = _logger.BeginScope("CategoryBreakdown for {RequestingUser} targeting {TargetUser} from {StartDate} to {EndDate}",
                 requestingUser, targetUsername ?? requestingUser, startDate, endDate);
 
             _logger.LogInformation("Starting category breakdown report generation");
@@ -149,8 +153,8 @@ namespace ExpenseTrackingSystem.Services
             _logger.LogDebug("Calculating category breakdown for {ExpenseCount} expenses", expenses.Count);
             var totalAmount = expenses.Sum(e => e.Amount);
             var categoryGroups = expenses.GroupBy(e => e.Category).ToList();
-            
-            _logger.LogDebug("Found {CategoryCount} unique categories with total amount {TotalAmount}", 
+
+            _logger.LogDebug("Found {CategoryCount} unique categories with total amount {TotalAmount}",
                 categoryGroups.Count, totalAmount);
 
             var categoryBreakdown = expenses
@@ -166,10 +170,10 @@ namespace ExpenseTrackingSystem.Services
                 .OrderByDescending(c => c.TotalAmount)
                 .ToList();
 
-            _logger.LogInformation("Successfully generated category breakdown with {CategoryCount} categories for user {TargetUser}", 
+            _logger.LogInformation("Successfully generated category breakdown with {CategoryCount} categories for user {TargetUser}",
                 categoryBreakdown.Count, targetUser);
 
-            _logger.LogDebug("Top categories: {TopCategories}", 
+            _logger.LogDebug("Top categories: {TopCategories}",
                 string.Join(", ", categoryBreakdown.Take(3).Select(c => $"{c.Category}({c.TotalAmount:C})")));
 
             return categoryBreakdown;
@@ -177,7 +181,7 @@ namespace ExpenseTrackingSystem.Services
 
         public async Task<List<TimeBasedReportDto>> GetTimeBasedReportAsync(string requestingUser, DateTime startDate, DateTime endDate, string? targetUsername = null, string groupBy = "month")
         {
-            using var scope = _logger.BeginScope("TimeBasedReport for {RequestingUser} targeting {TargetUser} grouped by {GroupBy}", 
+            using var scope = _logger.BeginScope("TimeBasedReport for {RequestingUser} targeting {TargetUser} grouped by {GroupBy}",
                 requestingUser, targetUsername ?? requestingUser, groupBy);
 
             _logger.LogInformation("Starting time-based report generation grouped by {GroupBy}", groupBy);
@@ -264,10 +268,10 @@ namespace ExpenseTrackingSystem.Services
                 .OrderBy(t => t.TimePeriod)
                 .ToList();
 
-            _logger.LogInformation("Successfully generated time-based report with {PeriodCount} time periods for user {TargetUser}", 
+            _logger.LogInformation("Successfully generated time-based report with {PeriodCount} time periods for user {TargetUser}",
                 timeBasedReport.Count, targetUser);
 
-            _logger.LogDebug("Time periods: {TimePeriods}", 
+            _logger.LogDebug("Time periods: {TimePeriods}",
                 string.Join(", ", timeBasedReport.Select(t => $"{t.TimePeriod}({t.ExpenseCount} expenses)")));
 
             return timeBasedReport;
@@ -275,7 +279,7 @@ namespace ExpenseTrackingSystem.Services
 
         public async Task<List<TopExpenseDto>> GetTopExpensesAsync(string requestingUser, DateTime startDate, DateTime endDate, string? targetUsername = null, int limit = 10)
         {
-            using var scope = _logger.BeginScope("TopExpenses for {RequestingUser} targeting {TargetUser} limit {Limit}", 
+            using var scope = _logger.BeginScope("TopExpenses for {RequestingUser} targeting {TargetUser} limit {Limit}",
                 requestingUser, targetUsername ?? requestingUser, limit);
 
             _logger.LogInformation("Starting top expenses report generation with limit {Limit}", limit);
@@ -322,12 +326,12 @@ namespace ExpenseTrackingSystem.Services
                 })
                 .ToList();
 
-            _logger.LogInformation("Successfully generated top expenses report with {ReturnedCount} expenses for user {TargetUser}", 
+            _logger.LogInformation("Successfully generated top expenses report with {ReturnedCount} expenses for user {TargetUser}",
                 topExpenses.Count, targetUser);
 
             if (topExpenses.Any())
             {
-                _logger.LogDebug("Top expense amounts: {TopAmounts}", 
+                _logger.LogDebug("Top expense amounts: {TopAmounts}",
                     string.Join(", ", topExpenses.Take(5).Select(e => $"{e.Amount:C}")));
             }
 
@@ -336,27 +340,27 @@ namespace ExpenseTrackingSystem.Services
 
         public async Task<DetailedReportDto> GetDetailedReportAsync(string requestingUser, ReportRequestDto request)
         {
-            using var scope = _logger.BeginScope("DetailedReport for {RequestingUser} targeting {TargetUser}", 
+            using var scope = _logger.BeginScope("DetailedReport for {RequestingUser} targeting {TargetUser}",
                 requestingUser, request.Username ?? requestingUser);
 
-            _logger.LogInformation("Starting detailed report generation from {StartDate} to {EndDate}", 
+            _logger.LogInformation("Starting detailed report generation from {StartDate} to {EndDate}",
                 request.StartDate, request.EndDate);
 
             var targetUser = await ValidateAndGetTargetUser(requestingUser, request.Username);
 
             _logger.LogDebug("Generating summary component of detailed report");
             var summary = await GetQuickSummaryAsync(requestingUser, targetUser, (int)(request.EndDate - request.StartDate).TotalDays);
-            
+
             _logger.LogDebug("Generating category breakdown component of detailed report");
             var categoryBreakdown = await GetCategoryBreakdownAsync(requestingUser, request.StartDate, request.EndDate, targetUser);
-            
+
             _logger.LogDebug("Generating time-based component of detailed report");
             var timeBasedData = await GetTimeBasedReportAsync(requestingUser, request.StartDate, request.EndDate, targetUser);
-            
+
             _logger.LogDebug("Generating top expenses component of detailed report with limit {Limit}", request.TopExpensesLimit);
             var topExpenses = await GetTopExpensesAsync(requestingUser, request.StartDate, request.EndDate, targetUser, request.TopExpensesLimit);
 
-            _logger.LogInformation("Successfully compiled detailed report for user {TargetUser} with {CategoryCount} categories, {TimePeriodsCount} time periods, and {TopExpensesCount} top expenses", 
+            _logger.LogInformation("Successfully compiled detailed report for user {TargetUser} with {CategoryCount} categories, {TimePeriodsCount} time periods, and {TopExpensesCount} top expenses",
                 targetUser, categoryBreakdown.Count, timeBasedData.Count, topExpenses.Count);
 
             return new DetailedReportDto
@@ -370,7 +374,7 @@ namespace ExpenseTrackingSystem.Services
 
         private async Task<string> ValidateAndGetTargetUser(string requestingUser, string? targetUsername)
         {
-            _logger.LogDebug("Validating user access: {RequestingUser} requesting data for {TargetUser}", 
+            _logger.LogDebug("Validating user access: {RequestingUser} requesting data for {TargetUser}",
                 requestingUser, targetUsername ?? requestingUser);
 
             var requestingUserData = await _userService.GetUserByUsername(requestingUser);
@@ -401,7 +405,7 @@ namespace ExpenseTrackingSystem.Services
 
             if (!requestingUser.Equals(targetUsername, StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogWarning("Unauthorized access attempt: {RequestingUser} tried to access {TargetUser}'s data", 
+                _logger.LogWarning("Unauthorized access attempt: {RequestingUser} tried to access {TargetUser}'s data",
                     requestingUser, targetUsername);
                 throw new UnauthorizedAccessException("You can only access your own reports.");
             }
@@ -417,5 +421,37 @@ namespace ExpenseTrackingSystem.Services
                 System.Globalization.CalendarWeekRule.FirstFourDayWeek,
                 DayOfWeek.Monday);
         }
+        
+        private byte[] GenerateCsv(ReportSummaryDto summary)
+        {
+            var sb = new StringBuilder();
+            sb.AppendLine("Field,Value");
+            sb.AppendLine($"Report Type,{summary.ReportType}");
+            sb.AppendLine($"Username,{summary.Username}");
+            sb.AppendLine($"Created At,{summary.CreatedAt}");
+            sb.AppendLine($"Created By,{summary.CreatedBy}");
+            sb.AppendLine($"Timeline,{summary.Timeline}");
+            sb.AppendLine($"Period,{summary.Period}");
+            sb.AppendLine($"Total Expense,{summary.TotalExpense}");
+            sb.AppendLine($"Total Expense Count,{summary.TotalExpenseCount}");
+            sb.AppendLine($"Average Expense Amount,{summary.AverageExpenseAmount}");
+            sb.AppendLine($"Top Category,{summary.TopCategory}");
+            sb.AppendLine($"Top Category Amount,{summary.TopCategoryAmount}");
+
+            return Encoding.UTF8.GetBytes(sb.ToString());
+        }
+
+        public async Task SendSummaryReportToEmailAsync(string requestingUser, string recipientEmail, int lastNDays = 30)
+        {
+            var summary = await GetQuickSummaryAsync(requestingUser, null, lastNDays);
+
+            var csvBytes = GenerateCsv(summary); // generates .csv file in memory
+            string attachmentName = $"QuickSummary_{summary.Username}_{DateTime.Now:yyyyMMddHHmmss}.csv";
+
+            var body = $"Hello,\n\nAttached is the Quick Summary Report generated by {requestingUser}.\n\nThanks,\nExpense Tracker Team";
+
+            await _emailService.SendReportEmailAsync(recipientEmail, $"Expense Report from {requestingUser}", body, csvBytes, attachmentName);
+        }
+
     }
 }

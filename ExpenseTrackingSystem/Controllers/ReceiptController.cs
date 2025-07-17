@@ -24,11 +24,12 @@ namespace ExpenseTrackingSystem.Controllers
         private readonly IRepository<Guid, Expense> _expenseRepository;
         private readonly ReceiptMapper _receiptMapper;
         private readonly string _storagePath;
+        // string storagePath = "/Users/aditirajesh/Desktop/CapstoneProject-ETS/Receipts")
 
         public ReceiptController(IReceiptService receiptService, ILogger<ReceiptController> logger,
                                 IRepository<Guid, Receipt> receiptRepository, IRepository<string, User> userRepository,
                                 ReceiptMapper receiptMapper, IRepository<Guid, Expense> expenseRepository,
-                                string storagePath = "/Users/aditirajesh/Desktop/CapstoneProject-ETS/Receipts"
+                                string storagePath = "/Users/vaishal/Desktop/CapstoneProject-ETS/Receipts"
                                 )
         {
             _receiptService = receiptService;

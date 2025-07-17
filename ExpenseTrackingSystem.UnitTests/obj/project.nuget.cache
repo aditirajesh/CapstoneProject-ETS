@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "b2tdypS+oJI=",
+  "dgSpecHash": "qAGwym2eZ7A=",
   "success": true,
   "projectFilePath": "/Users/vaishal/Desktop/Aditi_Project/CapstoneProject-ETS/ExpenseTrackingSystem.UnitTests/ExpenseTrackingSystem.UnitTests.csproj",
   "expectedPackageFiles": [
@@ -15,6 +15,7 @@
     "/Users/vaishal/.nuget/packages/coverlet.collector/6.0.2/coverlet.collector.6.0.2.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/fare/2.1.1/fare.2.1.1.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/fluentassertions/8.3.0/fluentassertions.8.3.0.nupkg.sha512",
+    "/Users/vaishal/.nuget/packages/itextsharp/5.5.13/itextsharp.5.5.13.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/microsoft.aspnetcore.authentication.abstractions/2.3.0/microsoft.aspnetcore.authentication.abstractions.2.3.0.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/microsoft.aspnetcore.authentication.google/9.0.7/microsoft.aspnetcore.authentication.google.9.0.7.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/microsoft.aspnetcore.authentication.jwtbearer/9.0.5/microsoft.aspnetcore.authentication.jwtbearer.9.0.5.nupkg.sha512",
@@ -133,5 +134,16 @@
     "/Users/vaishal/.nuget/packages/system.threading.channels/8.0.0/system.threading.channels.8.0.0.nupkg.sha512",
     "/Users/vaishal/.nuget/packages/system.threading.tasks/4.3.0/system.threading.tasks.4.3.0.nupkg.sha512"
   ],
-  "logs": []
+  "logs": [
+    {
+      "code": "NU1701",
+      "level": "Warning",
+      "warningLevel": 1,
+      "message": "Package 'iTextSharp 5.5.13' was restored using '.NETFramework,Version=v4.6.1, .NETFramework,Version=v4.6.2, .NETFramework,Version=v4.7, .NETFramework,Version=v4.7.1, .NETFramework,Version=v4.7.2, .NETFramework,Version=v4.8, .NETFramework,Version=v4.8.1' instead of the project target framework 'net9.0'. This package may not be fully compatible with your project.",
+      "libraryId": "iTextSharp",
+      "targetGraphs": [
+        "net9.0"
+      ]
+    }
+  ]
 }

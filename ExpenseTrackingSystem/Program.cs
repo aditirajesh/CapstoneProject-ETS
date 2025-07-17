@@ -145,6 +145,7 @@ builder.Services.AddTransient<ITokenService, TokenService>();
 builder.Services.AddTransient<ExpenseTrackingSystem.Interfaces.IAuthenticationService, ExpenseTrackingSystem.Services.AuthenticationService>();
 builder.Services.AddTransient<IAuditLogService, AuditLogService>();
 builder.Services.AddTransient<IReportService, ReportService>();
+builder.Services.AddTransient<IEmailService,EmailService>();
 #endregion
 
 #region Mappers 

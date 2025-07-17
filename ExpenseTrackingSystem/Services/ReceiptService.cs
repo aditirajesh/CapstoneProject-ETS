@@ -17,12 +17,16 @@ namespace ExpenseTrackingSystem.Services
         private readonly IAuditLogService _auditLogService;
         private readonly ILogger<ReceiptService> _logger; // Add this field
 
+        
+        // string storagePath = "/Users/aditirajesh/Desktop/CapstoneProject-ETS/Receipts")
+
         public ReceiptService(IRepository<Guid, Receipt> receiptRepository,
                               IRepository<Guid, Expense> expenseRepository,
                               IRepository<string, User> userRepository,
                               IAuditLogService auditLogService,
                               ILogger<ReceiptService> logger, // Add logger parameter
-                              string storagePath = "/Users/aditirajesh/Desktop/CapstoneProject-ETS/Receipts")
+                              string storagePath = "/Users/vaishal/Desktop/CapstoneProject-ETS/Receipts")
+
         {
             _receiptRepository = receiptRepository;
             _expenseRepository = expenseRepository;
