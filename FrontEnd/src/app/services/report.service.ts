@@ -1,6 +1,6 @@
 import { Injectable } from "@angular/core";
 import { environment } from "../../environments/environment.prod";
-import { HttpClient, HttpErrorResponse, HttpParams } from "@angular/common/http";
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from "@angular/common/http";
 import { CategoryBreakdownDto, DetailedReportDto, QuickSummaryRequestDto, ReportRequestDto, ReportSummaryDto, TimeBasedReportDto, TopExpenseDto } from "../models/ReportDTO";
 import { catchError, map, Observable, throwError } from "rxjs";
 
@@ -162,4 +162,21 @@ export class ReportsService {
     
     return throwError(() => new Error(errorMessage));
   }
+
+  formHeader():HttpHeaders{
+    var token=localStorage.getItem('expense_tracker_access_token');
+
+    return new HttpHeaders({
+      'Authorization':`Bearer ${token}`
+    });
+  }
+  sendReportByEmail(recipientEmail: string, lastNDays: number = 30): Observable<any> {
+    return this.http.post(`${this.apiUrl}/send-summary-email`, {
+      email: recipientEmail,
+      lastNDays: lastNDays
+    },{headers:this.formHeader(),
+      responseType: 'text' as 'json'
+    }).pipe(catchError(this.handleError.bind(this)));
+  }
+
 }

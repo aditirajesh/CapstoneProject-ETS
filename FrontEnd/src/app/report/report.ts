@@ -30,6 +30,11 @@ export class ReportComponent implements OnInit, OnDestroy {
   private timeChart?: Chart;
   private topExpensesChart?: Chart;
 
+  //adding recipient email 
+  recipientEmail: string = '';
+  isEmailModalOpen = false;
+  
+
   currentUser: CurrentUser | null = null;
   isLoading = false;
   error = '';
@@ -638,6 +643,38 @@ export class ReportComponent implements OnInit, OnDestroy {
     this.reportsService.downloadReportAsJSON(reportData, filename);
   }
 
+
+  // added shareReport function
+
+  shareReport(): void {
+    if (!this.recipientEmail) {
+      alert('Please enter a recipient email.');
+      return;
+    }
+
+    this.isLoading = true;
+    const lastNDays = this.presets.find(p => p.id === this.activePreset)?.days || 30;
+
+    this.reportsService.sendReportByEmail(this.recipientEmail, lastNDays).subscribe({
+      next: () => {
+        console.log(lastNDays);
+        alert(`Report sent successfully to ${this.recipientEmail}`);
+        this.recipientEmail = '';
+        this.isEmailModalOpen=false;
+      },
+      error: (err) => {
+        console.log(lastNDays);
+        console.log(this.recipientEmail);
+        console.log(err);
+        alert('Failed to send email: ' + err.message);
+        this.recipientEmail = '';
+        this.isEmailModalOpen=false;
+      },
+      complete: () => {
+        this.isLoading = false;
+      }
+    });
+  }
   logout(): void {
     this.authService.logout();
   }

@@ -534,7 +534,7 @@ namespace ExpenseTrackingSystem.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Analyser")]
         [HttpGet("admin/all")]
         public async Task<ActionResult<ICollection<Expense>>> GetAllExpensesAdmin(
             [FromQuery] string? username,
@@ -589,7 +589,7 @@ namespace ExpenseTrackingSystem.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Analyser")]
         [HttpPost("admin/search")]
         public async Task<ActionResult<ICollection<Expense>>> AdminSearchExpenses([FromBody] ExpenseSearchModel search)
         {

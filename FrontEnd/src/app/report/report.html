@@ -44,7 +44,29 @@
     </nav>
   </header>
 
+  <!-- Share Report Content
+   <div class="share-report-card">
+      <h3><i class="icon-email"></i> Share Report via Email</h3>
+      <div class="email-form">
+        <input
+          type="email"
+          [(ngModel)]="recipientEmail"
+          placeholder="Enter recipient email"
+          class="email-input"
+        />
+        <button
+          (click)="shareReport()"
+          [disabled]="!recipientEmail || isLoading"
+          class="share-btn"
+        >
+          <i class="icon-send"></i> Send
+        </button>
+      </div>
+    </div> -->
+
+
   <!-- Reports Content -->
+
   <div class="reports-content-wrapper">
     <!-- Admin Context Banner -->
     <div *ngIf="isAdminView" class="admin-context-banner">
@@ -76,6 +98,40 @@
           <i class="icon-download"></i>
           Download Report
         </button>
+
+                <!-- Share Report Button -->
+        <button class="email-icon-btn download-btn" (click)="isEmailModalOpen = true">
+          📧 Share via Email
+        </button>
+
+        <!-- Modal -->
+        <div *ngIf="isEmailModalOpen" class="modal-backdrop">
+          <div class="modal-content">
+            <h3>📨 Share Report</h3>
+
+            <input
+              [(ngModel)]="recipientEmail"
+              type="email"
+              class="email-input"
+              placeholder="Recipient's email"
+            />
+
+            <div class="modal-actions">
+              <button 
+                class="submit-btn" 
+                (click)="shareReport()" 
+                [disabled]="!recipientEmail || isLoading">
+                ✉️ Send Email
+              </button>
+              <button class="cancel-btn" (click)="isEmailModalOpen = false">
+                ❌ Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        
+        
       </div>
     </div>
 

@@ -21,12 +21,11 @@ public class EmailService : IEmailService
         {
             using var message = new MailMessage
             {
-                From = new MailAddress(_configuration["Smtp:Username"]), // Sets sender
-                Subject = subject,
+                From = new MailAddress(_configuration["Smtp:Username"]), 
                 Body = body,
                 IsBodyHtml = false
             };
-            message.To.Add(new MailAddress(recipientEmail)); // Sets recipient
+            message.To.Add(new MailAddress(recipientEmail)); 
 
 
             if (attachment != null && !string.IsNullOrEmpty(attachmentName))

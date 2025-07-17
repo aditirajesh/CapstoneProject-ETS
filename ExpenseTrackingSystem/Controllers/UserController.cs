@@ -88,22 +88,22 @@ namespace ExpenseTrackingSystem.Controllers
             var adminUser = User.Identity?.Name;
             using var scope = _logger.BeginScope("GetAllUsers by {AdminUser}", adminUser);
 
-            _logger.LogInformation("Get all users request by admin {AdminUser} from IP {RemoteIP}", 
+            _logger.LogInformation("Get all users request by admin {AdminUser} from IP {RemoteIP}",
                 adminUser, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             try
             {
                 _logger.LogDebug("Retrieving all users from service");
                 var users = await _userService.GetAllUsers();
-                
-                _logger.LogInformation("Successfully retrieved {UserCount} users for admin {AdminUser}", 
+
+                _logger.LogInformation("Successfully retrieved {UserCount} users for admin {AdminUser}",
                     users.Count, adminUser);
-                
+
                 return Ok(users);
             }
             catch (ExpenseTrackingSystem.Exceptions.CollectionEmptyException ex)
             {
-                _logger.LogWarning("Get all users failed for admin {AdminUser} - no users found: {ErrorMessage}", 
+                _logger.LogWarning("Get all users failed for admin {AdminUser} - no users found: {ErrorMessage}",
                     adminUser, ex.Message);
                 return BadRequest(ex.Message);
             }
@@ -121,7 +121,7 @@ namespace ExpenseTrackingSystem.Controllers
             var adminUser = User.Identity?.Name;
             using var scope = _logger.BeginScope("SearchUsers by {AdminUser}", adminUser);
 
-            _logger.LogInformation("User search request by admin {AdminUser} with criteria: Username={Username}, Role={Role} from IP {RemoteIP}", 
+            _logger.LogInformation("User search request by admin {AdminUser} with criteria: Username={Username}, Role={Role} from IP {RemoteIP}",
                 adminUser, search?.Username, search?.Role, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             try
@@ -134,10 +134,10 @@ namespace ExpenseTrackingSystem.Controllers
 
                 _logger.LogDebug("Processing user search for admin {AdminUser}", adminUser);
                 var result = await _userService.SearchUsers(search);
-                
-                _logger.LogInformation("User search completed for admin {AdminUser}, returning {UserCount} users", 
+
+                _logger.LogInformation("User search completed for admin {AdminUser}, returning {UserCount} users",
                     adminUser, result.Count);
-                
+
                 return Ok(result);
             }
             catch (Exception ex)
@@ -154,7 +154,7 @@ namespace ExpenseTrackingSystem.Controllers
             var requestingUser = User.Identity?.Name;
             using var scope = _logger.BeginScope("GetUser {TargetUsername} by {RequestingUser}", username, requestingUser);
 
-            _logger.LogInformation("Get user request for {TargetUsername} by {RequestingUser} from IP {RemoteIP}", 
+            _logger.LogInformation("Get user request for {TargetUsername} by {RequestingUser} from IP {RemoteIP}",
                 username, requestingUser, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             try
@@ -168,33 +168,33 @@ namespace ExpenseTrackingSystem.Controllers
                 var isAdmin = User.IsInRole("Admin");
                 var isAccessingOwnData = requestingUser == username;
 
-                _logger.LogDebug("Authorization check for {RequestingUser}: IsAdmin={IsAdmin}, IsAccessingOwnData={IsAccessingOwnData}", 
+                _logger.LogDebug("Authorization check for {RequestingUser}: IsAdmin={IsAdmin}, IsAccessingOwnData={IsAccessingOwnData}",
                     requestingUser, isAdmin, isAccessingOwnData);
 
                 if (!isAdmin && !isAccessingOwnData)
                 {
-                    _logger.LogWarning("Unauthorized access attempt - user {RequestingUser} tried to access {TargetUsername}'s data", 
+                    _logger.LogWarning("Unauthorized access attempt - user {RequestingUser} tried to access {TargetUsername}'s data",
                         requestingUser, username);
                     return Unauthorized("You are not authorized to access this user's data.");
                 }
 
                 _logger.LogDebug("Authorization successful, retrieving user {TargetUsername}", username);
                 var user = await _userService.GetUserByUsername(username);
-                
-                _logger.LogInformation("Successfully retrieved user {TargetUsername} for {RequestingUser}", 
+
+                _logger.LogInformation("Successfully retrieved user {TargetUsername} for {RequestingUser}",
                     username, requestingUser);
-                
+
                 return Ok(user);
             }
             catch (ExpenseTrackingSystem.Exceptions.EntityNotFoundException ex)
             {
-                _logger.LogWarning("Get user failed - user {TargetUsername} not found for requester {RequestingUser}: {ErrorMessage}", 
+                _logger.LogWarning("Get user failed - user {TargetUsername} not found for requester {RequestingUser}: {ErrorMessage}",
                     username, requestingUser, ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error retrieving user {TargetUsername} for {RequestingUser}", 
+                _logger.LogError(ex, "Unexpected error retrieving user {TargetUsername} for {RequestingUser}",
                     username, requestingUser);
                 return BadRequest(ex.Message);
             }
@@ -207,7 +207,7 @@ namespace ExpenseTrackingSystem.Controllers
             var currentUserName = User.Identity?.Name;
             using var scope = _logger.BeginScope("UpdateUser {TargetUsername} by {CurrentUser}", username, currentUserName);
 
-            _logger.LogInformation("User update request for {TargetUsername} by {CurrentUser} from IP {RemoteIP}", 
+            _logger.LogInformation("User update request for {TargetUsername} by {CurrentUser} from IP {RemoteIP}",
                 username, currentUserName, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             try
@@ -220,7 +220,7 @@ namespace ExpenseTrackingSystem.Controllers
 
                 if (dto == null)
                 {
-                    _logger.LogWarning("Update user request with null DTO for {TargetUsername} from {CurrentUser}", 
+                    _logger.LogWarning("Update user request with null DTO for {TargetUsername} from {CurrentUser}",
                         username, currentUserName);
                     return BadRequest("Invalid request body.");
                 }
@@ -228,13 +228,13 @@ namespace ExpenseTrackingSystem.Controllers
                 var isAdmin = User.IsInRole("Admin");
                 var isUpdatingSelf = currentUserName == username;
 
-                _logger.LogDebug("Authorization check for {CurrentUser} updating {TargetUsername}: IsAdmin={IsAdmin}, IsUpdatingSelf={IsUpdatingSelf}", 
+                _logger.LogDebug("Authorization check for {CurrentUser} updating {TargetUsername}: IsAdmin={IsAdmin}, IsUpdatingSelf={IsUpdatingSelf}",
                     currentUserName, username, isAdmin, isUpdatingSelf);
 
                 // Authorization check
                 if (!isAdmin && !isUpdatingSelf)
                 {
-                    _logger.LogWarning("Unauthorized update attempt - user {CurrentUser} tried to update {TargetUsername}", 
+                    _logger.LogWarning("Unauthorized update attempt - user {CurrentUser} tried to update {TargetUsername}",
                         currentUserName, username);
                     return Unauthorized("You are not authorized to update this user's data.");
                 }
@@ -242,23 +242,23 @@ namespace ExpenseTrackingSystem.Controllers
                 // Role change validation
                 if (!string.IsNullOrWhiteSpace(dto.Role))
                 {
-                    _logger.LogDebug("Role change requested for {TargetUsername} to role {NewRole} by {CurrentUser}", 
+                    _logger.LogDebug("Role change requested for {TargetUsername} to role {NewRole} by {CurrentUser}",
                         username, dto.Role, currentUserName);
-                    
+
                     if (!isAdmin)
                     {
-                        _logger.LogWarning("Unauthorized role change attempt - non-admin {CurrentUser} tried to change role for {TargetUsername}", 
+                        _logger.LogWarning("Unauthorized role change attempt - non-admin {CurrentUser} tried to change role for {TargetUsername}",
                             currentUserName, username);
                         return Unauthorized("Only administrators can change user roles.");
                     }
-                    
+
                     if (isUpdatingSelf)
                     {
                         _logger.LogWarning("Invalid role change attempt - admin {CurrentUser} tried to change own role", currentUserName);
                         return BadRequest("Administrators cannot change their own role.");
                     }
 
-                    _logger.LogInformation("Role change authorized for {TargetUsername} to {NewRole} by admin {CurrentUser}", 
+                    _logger.LogInformation("Role change authorized for {TargetUsername} to {NewRole} by admin {CurrentUser}",
                         username, dto.Role, currentUserName);
                 }
 
@@ -267,41 +267,42 @@ namespace ExpenseTrackingSystem.Controllers
                 if (!string.IsNullOrWhiteSpace(dto.Phone)) fieldsToUpdate.Add("phone");
                 if (!string.IsNullOrWhiteSpace(dto.Role)) fieldsToUpdate.Add("role");
 
-                _logger.LogDebug("Updating user {TargetUsername} with fields: {UpdatedFields}", 
+                _logger.LogDebug("Updating user {TargetUsername} with fields: {UpdatedFields}",
                     username, string.Join(", ", fieldsToUpdate));
 
                 var updated = await _userService.UpdateUserDetails(username, dto, isAdmin, isUpdatingSelf);
-                
-                _logger.LogInformation("Successfully updated user {TargetUsername} by {CurrentUser} with fields: {UpdatedFields}", 
+
+                _logger.LogInformation("Successfully updated user {TargetUsername} by {CurrentUser} with fields: {UpdatedFields}",
                     username, currentUserName, string.Join(", ", fieldsToUpdate));
-                
+
                 return Ok(updated);
             }
             catch (ExpenseTrackingSystem.Exceptions.EntityNotFoundException ex)
             {
-                _logger.LogWarning("Update user failed - user {TargetUsername} not found for requester {CurrentUser}: {ErrorMessage}", 
+                _logger.LogWarning("Update user failed - user {TargetUsername} not found for requester {CurrentUser}: {ErrorMessage}",
                     username, currentUserName, ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (UnauthorizedAccessException ex)
             {
-                _logger.LogWarning("Update user failed - unauthorized operation by {CurrentUser} for {TargetUsername}: {ErrorMessage}", 
+                _logger.LogWarning("Update user failed - unauthorized operation by {CurrentUser} for {TargetUsername}: {ErrorMessage}",
                     currentUserName, username, ex.Message);
                 return Unauthorized(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("Update user failed - invalid operation by {CurrentUser} for {TargetUsername}: {ErrorMessage}", 
+                _logger.LogWarning("Update user failed - invalid operation by {CurrentUser} for {TargetUsername}: {ErrorMessage}",
                     currentUserName, username, ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error updating user {TargetUsername} by {CurrentUser}", 
+                _logger.LogError(ex, "Unexpected error updating user {TargetUsername} by {CurrentUser}",
                     username, currentUserName);
                 return BadRequest(ex.Message);
             }
         }
+
 
         [Authorize(Roles = "Admin")]
         [HttpDelete("delete/{username}")]
@@ -310,14 +311,14 @@ namespace ExpenseTrackingSystem.Controllers
             var deletedBy = User.Identity?.Name;
             using var scope = _logger.BeginScope("DeleteUser {TargetUsername} by {AdminUser}", username, deletedBy);
 
-            _logger.LogInformation("User deletion request for {TargetUsername} by admin {AdminUser} from IP {RemoteIP}", 
+            _logger.LogInformation("User deletion request for {TargetUsername} by admin {AdminUser} from IP {RemoteIP}",
                 username, deletedBy, HttpContext.Connection.RemoteIpAddress?.ToString());
 
             try
             {
                 if (string.IsNullOrWhiteSpace(deletedBy))
                 {
-                    _logger.LogWarning("Delete user request failed - no authenticated user from IP {RemoteIP}", 
+                    _logger.LogWarning("Delete user request failed - no authenticated user from IP {RemoteIP}",
                         HttpContext.Connection.RemoteIpAddress?.ToString());
                     return Unauthorized("You must be logged in to delete a user.");
                 }
@@ -336,30 +337,53 @@ namespace ExpenseTrackingSystem.Controllers
 
                 _logger.LogDebug("Processing user deletion for {TargetUsername} by admin {AdminUser}", username, deletedBy);
                 var deleted = await _userService.DeleteUser(username, deletedBy);
-                
-                _logger.LogInformation("Successfully deleted user {TargetUsername} by admin {AdminUser}", 
+
+                _logger.LogInformation("Successfully deleted user {TargetUsername} by admin {AdminUser}",
                     username, deletedBy);
-                
+
                 return Ok(deleted);
             }
             catch (ExpenseTrackingSystem.Exceptions.EntityNotFoundException ex)
             {
-                _logger.LogWarning("Delete user failed - user {TargetUsername} not found for admin {AdminUser}: {ErrorMessage}", 
+                _logger.LogWarning("Delete user failed - user {TargetUsername} not found for admin {AdminUser}: {ErrorMessage}",
                     username, deletedBy, ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (InvalidOperationException ex)
             {
-                _logger.LogWarning("Delete user failed - invalid operation by admin {AdminUser} for {TargetUsername}: {ErrorMessage}", 
+                _logger.LogWarning("Delete user failed - invalid operation by admin {AdminUser} for {TargetUsername}: {ErrorMessage}",
                     deletedBy, username, ex.Message);
                 return BadRequest(ex.Message);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Unexpected error deleting user {TargetUsername} by admin {AdminUser}", 
+                _logger.LogError(ex, "Unexpected error deleting user {TargetUsername} by admin {AdminUser}",
                     username, deletedBy);
                 return BadRequest(ex.Message);
             }
         }
+        
+
+        [Authorize(Roles = "Admin")]
+        [HttpPut("{username}/assign-analyser")]
+        public async Task<IActionResult> AssignAnalyserRole(string username)
+        {
+            var currentUser = User.Identity?.Name ?? "Unknown";
+            
+            _logger.LogInformation("Received analyser role assignment request from {CurrentUser} for user {TargetUser}", 
+                currentUser, username);
+
+            try
+            {
+                var updatedUser = await _userService.AssignAnalyserRole(username, currentUser);
+                return Ok(updatedUser);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error assigning analyser role to {Username}", username);
+                return BadRequest(ex.Message);
+            }
+        }
+
     }
 }

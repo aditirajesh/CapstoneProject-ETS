@@ -44,13 +44,13 @@ namespace ExpenseTrackingSystem.Services
 
             _logger.LogDebug("Checking if user {Username} already exists", dto.Username);
             var existingUser = await _userRepository.GetByID(dto.Username);
-            
+
             if (existingUser == null)
             {
                 _logger.LogDebug("User {Username} does not exist, creating new user", dto.Username);
-                
+
                 var user = _userMapper.MapAddRequestUser(dto);
-                
+
                 _logger.LogDebug("Encrypting password for user {Username}", dto.Username);
                 var encryptedData = await _encryptionService.EncryptData(new EncryptModel
                 {
@@ -67,16 +67,16 @@ namespace ExpenseTrackingSystem.Services
                 {
                     user = await _userRepository.Add(user);
                     _logger.LogDebug("Successfully added user {Username} to repository", dto.Username);
-                    
+
                     await _auditservice.LogAction(new AuditAddRequestDto
                     {
                         Action = "Add",
                         EntityName = "User",
                         Details = "User added to database",
                         Username = dto.Username,
-                        Timestamp  = DateTimeOffset.UtcNow
+                        Timestamp = DateTimeOffset.UtcNow
                     });
-                    
+
                     _logger.LogInformation("Successfully created new user {Username} with role {Role}", dto.Username, dto.Role);
                 }
                 catch (Exception ex)
@@ -89,9 +89,9 @@ namespace ExpenseTrackingSystem.Services
             else if (existingUser != null && existingUser.IsDeleted)
             {
                 _logger.LogInformation("User {Username} exists but is deleted, reactivating account", dto.Username);
-                
+
                 existingUser.IsDeleted = false;
-                
+
                 _logger.LogDebug("Encrypting new password for reactivated user {Username}", dto.Username);
                 var encryptedData = await _encryptionService.EncryptData(new EncryptModel
                 {
@@ -101,23 +101,23 @@ namespace ExpenseTrackingSystem.Services
                 existingUser.Role = dto.Role;
                 existingUser.Phone = dto.Phone;
                 existingUser.CreatedAt = DateTimeOffset.UtcNow;
-                
+
                 _logger.LogDebug("Updating reactivated user {Username} in repository", dto.Username);
                 var added_user = await _userRepository.Update(existingUser.Username, existingUser);
-                
+
                 await _auditservice.LogAction(new AuditAddRequestDto
                 {
                     Action = "Add",
                     EntityName = "User",
                     Details = $"User added to database: {dto.Username}",
                     Username = dto.Username,
-                    Timestamp  = DateTimeOffset.UtcNow
+                    Timestamp = DateTimeOffset.UtcNow
                 });
-                
+
                 _logger.LogInformation("Successfully reactivated user {Username} with new role {Role}", dto.Username, dto.Role);
                 return added_user;
             }
-            
+
             _logger.LogWarning("Failed to create user {Username} - username already taken", dto.Username);
             throw new DuplicateEntityException("Username already taken");
         }
@@ -143,7 +143,7 @@ namespace ExpenseTrackingSystem.Services
             var expenseCount = user.Expenses?.Count ?? 0;
             var receiptCount = user.Receipts?.Count ?? 0;
 
-            _logger.LogInformation("Deleting user {Username} with {ExpenseCount} expenses and {ReceiptCount} receipts", 
+            _logger.LogInformation("Deleting user {Username} with {ExpenseCount} expenses and {ReceiptCount} receipts",
                 username, expenseCount, receiptCount);
 
             user.IsDeleted = true;
@@ -162,7 +162,7 @@ namespace ExpenseTrackingSystem.Services
                 Timestamp = DateTimeOffset.UtcNow
             });
 
-            _logger.LogInformation("Successfully soft deleted user {Username} by {DeletedBy}, {ExpenseCount} expenses and {ReceiptCount} receipts will be cascade deleted", 
+            _logger.LogInformation("Successfully soft deleted user {Username} by {DeletedBy}, {ExpenseCount} expenses and {ReceiptCount} receipts will be cascade deleted",
                 username, actualDeletedBy, expenseCount, receiptCount);
 
             return user;
@@ -178,7 +178,7 @@ namespace ExpenseTrackingSystem.Services
                 _logger.LogWarning("User {Username} not found or is deleted", username);
                 throw new EntityNotFoundException("Could not find user");
             }
-            
+
             _logger.LogDebug("Successfully retrieved user {Username} with role {Role}", username, user.Role);
             return user;
         }
@@ -193,7 +193,7 @@ namespace ExpenseTrackingSystem.Services
                 _logger.LogWarning("No users found in repository");
                 throw new CollectionEmptyException("No users present");
             }
-            
+
             var userList = users.ToList();
             _logger.LogInformation("Successfully retrieved {UserCount} users from repository", userList.Count);
             return userList;
@@ -202,20 +202,20 @@ namespace ExpenseTrackingSystem.Services
         public async Task<User> UpdateUserDetails(string username, UserUpdateRequestDto dto, bool isAdmin, bool isUpdatingSelf)
         {
             using var scope = _logger.BeginScope("UserUpdate for {Username} by {UpdateType}", username, isAdmin ? "Admin" : "User");
-            
-            _logger.LogInformation("Starting user update for {Username}, isAdmin: {IsAdmin}, isUpdatingSelf: {IsUpdatingSelf}", 
+
+            _logger.LogInformation("Starting user update for {Username}, isAdmin: {IsAdmin}, isUpdatingSelf: {IsUpdatingSelf}",
                 username, isAdmin, isUpdatingSelf);
 
             var existingUser = await _userRepository.GetByID(username);
-            
+
             if (existingUser == null || existingUser.IsDeleted == true)
             {
                 _logger.LogWarning("User {Username} not found or is deleted during update attempt", username);
                 throw new EntityNotFoundException("User not found");
             }
 
-            if (string.IsNullOrWhiteSpace(dto.Password) && 
-                string.IsNullOrWhiteSpace(dto.Phone) && 
+            if (string.IsNullOrWhiteSpace(dto.Password) &&
+                string.IsNullOrWhiteSpace(dto.Phone) &&
                 string.IsNullOrWhiteSpace(dto.Role))
             {
                 _logger.LogWarning("No fields provided for update for user {Username}", username);
@@ -227,22 +227,22 @@ namespace ExpenseTrackingSystem.Services
             // Role update logic
             if (!string.IsNullOrWhiteSpace(dto.Role))
             {
-                _logger.LogDebug("Role update requested for user {Username} from {OldRole} to {NewRole}", 
+                _logger.LogDebug("Role update requested for user {Username} from {OldRole} to {NewRole}",
                     username, existingUser.Role, dto.Role);
-                
+
                 if (!isAdmin)
                 {
                     _logger.LogWarning("Non-admin user attempted to change role for user {Username}", username);
                     throw new UnauthorizedAccessException("Only administrators can change user roles");
                 }
-                
+
                 if (isUpdatingSelf)
                 {
                     _logger.LogWarning("Admin {Username} attempted to change their own role", username);
                     throw new InvalidOperationException("Administrators cannot change their own role");
                 }
-                
-                _logger.LogInformation("Admin updating role for user {Username} from {OldRole} to {NewRole}", 
+
+                _logger.LogInformation("Admin updating role for user {Username} from {OldRole} to {NewRole}",
                     username, existingUser.Role, dto.Role);
                 existingUser.Role = dto.Role;
                 fieldsToUpdate.Add("role");
@@ -263,7 +263,7 @@ namespace ExpenseTrackingSystem.Services
             // Phone update
             if (!string.IsNullOrWhiteSpace(dto.Phone))
             {
-                _logger.LogDebug("Phone update requested for user {Username} from {OldPhone} to {NewPhone}", 
+                _logger.LogDebug("Phone update requested for user {Username} from {OldPhone} to {NewPhone}",
                     username, existingUser.Phone, dto.Phone);
                 existingUser.Phone = dto.Phone;
                 fieldsToUpdate.Add("phone");
@@ -272,16 +272,16 @@ namespace ExpenseTrackingSystem.Services
             existingUser.UpdatedBy = username;
             existingUser.UpdatedAt = DateTimeOffset.UtcNow;
 
-            _logger.LogDebug("Updating user {Username} in repository with fields: {UpdatedFields}", 
+            _logger.LogDebug("Updating user {Username} in repository with fields: {UpdatedFields}",
                 username, string.Join(", ", fieldsToUpdate));
 
             var updatedUser = await _userRepository.Update(username, existingUser);
-            
+
             var updatedFields = new List<string>();
             if (!string.IsNullOrWhiteSpace(dto.Password)) updatedFields.Add("password");
             if (!string.IsNullOrWhiteSpace(dto.Phone)) updatedFields.Add("phone");
             if (!string.IsNullOrWhiteSpace(dto.Role)) updatedFields.Add("role");
-            
+
             await _auditservice.LogAction(new AuditAddRequestDto
             {
                 Action = "Update",
@@ -291,7 +291,7 @@ namespace ExpenseTrackingSystem.Services
                 Timestamp = DateTimeOffset.UtcNow
             });
 
-            _logger.LogInformation("Successfully updated user {Username} with fields: {UpdatedFields}", 
+            _logger.LogInformation("Successfully updated user {Username} with fields: {UpdatedFields}",
                 username, string.Join(", ", updatedFields));
 
             return updatedUser;
@@ -299,7 +299,7 @@ namespace ExpenseTrackingSystem.Services
 
         public async Task<ICollection<User>> SearchUsers(UserSearchModel searchModel)
         {
-            _logger.LogInformation("Starting user search with criteria: Username={Username}, Role={Role}, CreatedAtRange={CreatedAtRange}", 
+            _logger.LogInformation("Starting user search with criteria: Username={Username}, Role={Role}, CreatedAtRange={CreatedAtRange}",
                 searchModel.Username, searchModel.Role,
                 searchModel.CreatedAtRange != null ? $"{searchModel.CreatedAtRange.MinVal}-{searchModel.CreatedAtRange.MaxVal}" : "None");
 
@@ -310,7 +310,7 @@ namespace ExpenseTrackingSystem.Services
             var originalCount = users.Count;
 
             users = FilterByUsername(users, searchModel.Username);
-            _logger.LogDebug("After username filter: {Count} users (filtered {Removed})", 
+            _logger.LogDebug("After username filter: {Count} users (filtered {Removed})",
                 users.Count, originalCount - users.Count);
 
             users = FilterByRole(users, searchModel.Role);
@@ -320,7 +320,7 @@ namespace ExpenseTrackingSystem.Services
             _logger.LogDebug("After creation date filter: {Count} users", users.Count);
 
             var finalUsers = users.OrderByDescending(u => u.CreatedAt).ToList();
-            _logger.LogInformation("Search completed, returning {ResultCount} users out of {TotalCount} total", 
+            _logger.LogInformation("Search completed, returning {ResultCount} users out of {TotalCount} total",
                 finalUsers.Count, originalCount);
 
             return finalUsers;
@@ -333,7 +333,7 @@ namespace ExpenseTrackingSystem.Services
                 _logger.LogTrace("No username filter applied");
                 return users;
             }
-            
+
             _logger.LogTrace("Filtering users by username containing '{Username}'", username);
             return users.Where(u => u.Username.Contains(username, StringComparison.OrdinalIgnoreCase)).ToList();
         }
@@ -345,7 +345,7 @@ namespace ExpenseTrackingSystem.Services
                 _logger.LogTrace("No role filter applied");
                 return users;
             }
-            
+
             _logger.LogTrace("Filtering users by role containing '{Role}'", role);
             return users.Where(u => u.Role != null && u.Role.Contains(role, StringComparison.OrdinalIgnoreCase)).ToList();
         }
@@ -358,7 +358,7 @@ namespace ExpenseTrackingSystem.Services
                 return users;
             }
 
-            _logger.LogTrace("Filtering users by creation date range {StartDate} - {EndDate}", 
+            _logger.LogTrace("Filtering users by creation date range {StartDate} - {EndDate}",
                 createdAtRange.MinVal, createdAtRange.MaxVal);
 
             if (createdAtRange.MinVal.HasValue)
@@ -369,5 +369,49 @@ namespace ExpenseTrackingSystem.Services
 
             return users;
         }
+
+        public async Task<User> AssignAnalyserRole(string username, string assignedBy)
+        {
+            using var scope = _logger.BeginScope("AssignAnalyserRole: {Username} by {AssignedBy}", username, assignedBy);
+
+            _logger.LogInformation("Admin {AssignedBy} is assigning Analyser role to user {Username}", assignedBy, username);
+
+            var user = await _userRepository.GetByID(username);
+
+            if (user == null || user.IsDeleted)
+            {
+                _logger.LogWarning("User {Username} not found or is deleted", username);
+                throw new EntityNotFoundException("User not found or is deleted");
+            }
+
+            if (user.Role == "Analyser")
+            {
+                _logger.LogInformation("User {Username} already has the Analyser role", username);
+                return user;
+            }
+
+            _logger.LogDebug("Updating role of user {Username} to 'Analyser'", username);
+            user.Role = "Analyser";
+            user.UpdatedAt = DateTimeOffset.UtcNow;
+            user.UpdatedBy = assignedBy;
+
+            var updatedUser = await _userRepository.Update(username, user);
+
+            await _auditservice.LogAction(new AuditAddRequestDto
+            {
+                Action = "Update",
+                EntityName = "User",
+                Details = $"Assigned role 'Analyser' to user {username}",
+                Username = assignedBy,
+                Timestamp = DateTimeOffset.UtcNow
+            });
+
+            _logger.LogInformation("Successfully assigned Analyser role to {Username} by {AssignedBy}", username, assignedBy);
+
+            return updatedUser;
+        }
+
+
+        
     }
 }
