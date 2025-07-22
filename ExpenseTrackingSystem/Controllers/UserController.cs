@@ -81,7 +81,7 @@ namespace ExpenseTrackingSystem.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Analyser")]
         [HttpGet("all")]
         public async Task<ActionResult<ICollection<User>>> GetAll()
         {
@@ -114,7 +114,7 @@ namespace ExpenseTrackingSystem.Controllers
             }
         }
 
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Analyser")]
         [HttpPost("search")]
         public async Task<ActionResult<ICollection<User>>> SearchUsers([FromBody] UserSearchModel search)
         {
@@ -372,17 +372,19 @@ namespace ExpenseTrackingSystem.Controllers
             
             _logger.LogInformation("Received analyser role assignment request from {CurrentUser} for user {TargetUser}", 
                 currentUser, username);
-
+            var user = await _userService.GetUserByUsername(currentUser);
+            if (user == null)
+                return Unauthorized();
             try
-            {
-                var updatedUser = await _userService.AssignAnalyserRole(username, currentUser);
-                return Ok(updatedUser);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error assigning analyser role to {Username}", username);
-                return BadRequest(ex.Message);
-            }
+                {
+                    var updatedUser = await _userService.AssignAnalyserRole(username, currentUser);
+                    return Ok(updatedUser);
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, "Error assigning analyser role to {Username}", username);
+                    return BadRequest(ex.Message);
+                }
         }
 
     }

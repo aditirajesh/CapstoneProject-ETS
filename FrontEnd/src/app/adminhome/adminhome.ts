@@ -25,10 +25,11 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
 
   // User and Authentication
   currentUser: CurrentUser | null = null;
-   
+    
   // Loading states
   isLoadingUsers: boolean = true;
   isDeletingUser: string | null = null;
+  isAssigningRole: string | null = null; // New state for assigning role
   isSearching: boolean = false;
   isCreatingUser: boolean = false;
   
@@ -55,6 +56,7 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   // Statistics
   totalActiveUsers: number = 0;
   totalAdmins: number = 0;
+  totalAnalysers: number = 0; // New stat for Analysers
   totalRegularUsers: number = 0;
   recentlyJoinedUsers: number = 0;
 
@@ -77,13 +79,11 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   }
 
   private initializeComponent(): void {
-    // Subscribe to current user
     this.authService.currentUser$
       .pipe(takeUntil(this.destroy$))
       .subscribe(user => {
         this.currentUser = user;
         if (!user || user.role !== 'Admin') {
-          // Redirect non-admin users
           this.router.navigate(['/home']);
         }
       });
@@ -104,17 +104,12 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   private async loadUsers(): Promise<void> {
     try {
       this.isLoadingUsers = true;
-      console.log(`Loading users - Page: ${this.currentPage}, Size: ${this.pageSize}`);
-      
       const users = await this.adminUserService.getAllUsers(this.currentPage, this.pageSize).toPromise();
-      
       if (users) {
         this.users = users;
         this.filteredUsers = [...users];
         this.calculateStatistics();
-        console.log(`Loaded ${users.length} users successfully`);
       }
-      
     } catch (error) {
       console.error('Error loading users:', error);
       this.users = [];
@@ -130,22 +125,13 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
       this.isSearching = false;
       return;
     }
-
     try {
       this.isSearching = true;
-      console.log('Searching for users with term:', searchTerm);
-      
-      const searchModel: UserSearchModel = {
-        username: searchTerm.trim()
-      };
-      
+      const searchModel: UserSearchModel = { username: searchTerm.trim() };
       const searchResults = await this.adminUserService.searchUsers(searchModel).toPromise();
-      
       if (searchResults) {
         this.filteredUsers = searchResults;
-        console.log(`Search returned ${searchResults.length} results`);
       }
-      
     } catch (error) {
       console.error('Error searching users:', error);
       this.filteredUsers = [];
@@ -157,9 +143,9 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   private calculateStatistics(): void {
     this.totalActiveUsers = this.users.filter(u => !u.isDeleted).length;
     this.totalAdmins = this.users.filter(u => u.role === 'Admin' && !u.isDeleted).length;
+    this.totalAnalysers = this.users.filter(u => u.role === 'Analyser' && !u.isDeleted).length; // Calculate analysers
     this.totalRegularUsers = this.users.filter(u => u.role === 'User' && !u.isDeleted).length;
     
-    // Calculate recently joined (last 7 days)
     const sevenDaysAgo = new Date();
     sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
     
@@ -167,16 +153,9 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
       const createdDate = new Date(u.createdAt);
       return createdDate >= sevenDaysAgo && !u.isDeleted;
     }).length;
-    
-    console.log('Statistics calculated:', {
-      totalActive: this.totalActiveUsers,
-      admins: this.totalAdmins,
-      users: this.totalRegularUsers,
-      recentlyJoined: this.recentlyJoinedUsers
-    });
   }
 
-  // Event handlers
+  // Event handlers and actions
   onSearchInputChange(event: Event): void {
     const target = event.target as HTMLInputElement;
     this.searchQuery = target.value;
@@ -190,33 +169,18 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   }
 
   async deleteUser(username: string): Promise<void> {
-    if (!confirm(`Are you sure you want to delete user "${username}"? This action cannot be undone.`)) {
-      return;
-    }
-
+    if (!confirm(`Are you sure you want to delete user "${username}"?`)) return;
     if (this.currentUser?.username === username) {
       alert('You cannot delete your own account.');
       return;
     }
-
     try {
       this.isDeletingUser = username;
-      console.log('Deleting user:', username);
-      
       await this.adminUserService.deleteUser(username).toPromise();
-      
-      // Remove user from local arrays
       this.users = this.users.filter(u => u.username !== username);
       this.filteredUsers = this.filteredUsers.filter(u => u.username !== username);
-      
-      // Recalculate statistics
       this.calculateStatistics();
-      
-      console.log('User deleted successfully:', username);
-      
-      // Show success message
       alert(`User "${username}" has been deleted successfully.`);
-      
     } catch (error) {
       console.error('Error deleting user:', error);
       alert('Failed to delete user. Please try again.');
@@ -225,11 +189,41 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
     }
   }
 
-  async changePage(newPage: number): Promise<void> {
-    if (newPage < 1 || newPage === this.currentPage) {
-      return;
+  /**
+   * Assigns the 'Analyser' role to a user.
+   * @param username The username of the user to update.
+   */
+  async assignAnalyserRole(username: string): Promise<void> {
+    if (!confirm(`Are you sure you want to assign the Analyser role to user "${username}"?`)) {
+        return;
     }
-    
+
+    try {
+        this.isAssigningRole = username;
+        console.log(`Assigning Analyser role to user: ${username}`);
+        
+        const updatedUser = await this.userService.assignAnalyserRole(username).toPromise();
+        
+        if (updatedUser) {
+            // Find and update the user in the local arrays to reflect the change immediately
+            const updateUserInArrays = (u: User) => u.username === username ? updatedUser : u;
+            this.users = this.users.map(updateUserInArrays);
+            this.filteredUsers = this.filteredUsers.map(updateUserInArrays);
+            
+            this.calculateStatistics(); // Recalculate stats to include the new analyser
+            
+            alert(`User "${username}" has been assigned the Analyser role.`);
+        }
+    } catch (error) {
+        console.error('Error assigning Analyser role:', error);
+        alert('Failed to assign role. Please try again.');
+    } finally {
+        this.isAssigningRole = null;
+    }
+  }
+
+  async changePage(newPage: number): Promise<void> {
+    if (newPage < 1 || newPage === this.currentPage) return;
     this.currentPage = newPage;
     await this.loadUsers();
   }
@@ -242,23 +236,16 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
 
   // Create User Modal Methods
   createUser(): void {
-    console.log('Opening create user modal...');
     this.showCreateUserModal = true;
     this.resetNewUserForm();
   }
 
   closeCreateUserModal(): void {
     this.showCreateUserModal = false;
-    this.resetNewUserForm();
   }
 
   private resetNewUserForm(): void {
-    this.newUser = {
-      username: '',
-      phone: '',
-      password: '',
-      role: ''
-    };
+    this.newUser = { username: '', phone: '', password: '', role: '' };
   }
 
   async submitCreateUser(): Promise<void> {
@@ -266,79 +253,40 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
       alert('Please fill in all required fields.');
       return;
     }
-
     try {
       this.isCreatingUser = true;
-      console.log('Creating new user:', this.newUser.username);
-
       const createdUser = await this.userService.createUser(this.newUser).toPromise();
-      
       if (createdUser) {
-        console.log('User created successfully:', createdUser);
-        
-        // Add the new user to the local arrays
-        this.users.push(createdUser);
+        this.users.unshift(createdUser); // Add to beginning of the list
         this.filteredUsers = [...this.users];
-        
-        // Recalculate statistics
         this.calculateStatistics();
-        
-        // Close modal and show success message
         this.closeCreateUserModal();
         alert(`User "${createdUser.username}" has been created successfully!`);
-        
-        // Optionally refresh the users list to get the latest data from server
-        // await this.loadUsers();
       }
-      
     } catch (error: any) {
       console.error('Error creating user:', error);
-      
-      // Handle specific error messages from the API
-      let errorMessage = 'Failed to create user. Please try again.';
-      
-      if (error?.message) {
-        errorMessage = error.message;
-      } else if (error?.status === 409) {
-        errorMessage = 'This username is already taken. Please choose a different username.';
-      } else if (error?.status === 400) {
-        errorMessage = 'Invalid user data provided. Please check your input.';
-      }
-      
+      const errorMessage = error?.message || 'Failed to create user. Please check the details and try again.';
       alert(errorMessage);
     } finally {
       this.isCreatingUser = false;
     }
   }
 
-  // Navigation methods
+  // Navigation and Utility methods
   navigateToUserExpenses(username: string): void {
-    console.log('Admin navigating to expenses for user:', username);
-    // Navigate to expenses page with admin flag and target username
-    this.router.navigate(['/expenses'], { 
-      queryParams: { 
-        adminView: 'true',
-        targetUser: username 
-      } 
-    });
+    this.router.navigate(['/expenses'], { queryParams: { adminView: 'true', targetUser: username } });
   }
 
   navigateToUserReports(username: string): void {
-    console.log('Admin navigating to reports for user:', username);
-    // Navigate to reports page with admin flag and target username
-    this.router.navigate(['/reports'], { 
-      queryParams: { 
-        adminView: 'true',
-        targetUser: username 
-      } 
-    });
+    this.router.navigate(['/reports'], { queryParams: { adminView: 'true', targetUser: username } });
   }
 
-  // Utility methods
   getUserRoleBadgeClass(role: string): string {
     switch (role?.toLowerCase()) {
       case 'admin':
         return 'role-badge admin';
+      case 'analyser': // New class for Analyser role
+        return 'role-badge analyser';
       case 'user':
         return 'role-badge user';
       default:
@@ -356,18 +304,13 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   }
 
   isUserOnline(updatedAt: Date): boolean {
-    // Convert to string if it's not already
     const dateString = updatedAt instanceof Date ? updatedAt.toISOString() : String(updatedAt);
     return this.adminUserService.formatLastSeen(dateString) === 'Just now';
   }
 
   formatPhone(phone: string): string {
     if (!phone) return 'Not provided';
-    
-    if (phone.length === 10) {
-      return `+91 ${phone.slice(0, 5)} ${phone.slice(5)}`;
-    }
-    return phone;
+    return phone.length === 10 ? `+91 ${phone.slice(0, 5)} ${phone.slice(5)}` : phone;
   }
 
   trackByUsername(index: number, user: User): string {
@@ -375,14 +318,12 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    console.log('Admin logging out...');
     this.authService.logout();
   }
 
   // Computed properties
   get displayUsername(): string {
     if (!this.currentUser?.username) return 'Admin';
-    
     const username = this.currentUser.username;
     const atIndex = username.indexOf('@');
     return atIndex > -1 ? username.substring(0, atIndex) : username;
@@ -402,10 +343,8 @@ export class AdminHomeComponent implements OnInit, OnDestroy {
 
   get paginationInfo(): string {
     if (this.totalUsers === 0) return 'No users';
-    
     const start = (this.currentPage - 1) * this.pageSize + 1;
     const end = Math.min(this.currentPage * this.pageSize, this.totalUsers);
-    
     return `Showing ${start}-${end} of ${this.totalUsers} users`;
   }
 }

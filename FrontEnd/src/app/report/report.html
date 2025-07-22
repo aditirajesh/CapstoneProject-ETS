@@ -1,19 +1,17 @@
 <div class="reports-container">
   <header class="header">
     <nav class="nav-container">
-      <!-- Admin Navigation (always shown if user is admin) -->
       <div class="nav-left" *ngIf="isAdmin">
-        <a routerLink="/admin-home" class="nav-item" [class.active]="isAdminView" (click)="navigateToAdminHome()">
+        <a routerLink="/admin-home" class="nav-item" [class.active]="isSupervisoryView" (click)="navigateToAdminHome()">
           <i class="icon-users"></i>
           <span>Users</span>
         </a>
-        <a routerLink="/profile" class="nav-item" [class.active]="!isAdminView" (click)="navigateToProfile()">
+        <a routerLink="/profile" class="nav-item" [class.active]="!isSupervisoryView" (click)="navigateToProfile()">
           <i class="icon-profile"></i>
           <span>Profile</span>
         </a>
       </div>
 
-      <!-- Regular User Navigation -->
       <div class="nav-left" *ngIf="!isAdmin">
         <a routerLink="/home" class="nav-item" (click)="navigateToHome()">
           <i class="icon-home"></i>
@@ -44,67 +42,40 @@
     </nav>
   </header>
 
-  <!-- Share Report Content
-   <div class="share-report-card">
-      <h3><i class="icon-email"></i> Share Report via Email</h3>
-      <div class="email-form">
-        <input
-          type="email"
-          [(ngModel)]="recipientEmail"
-          placeholder="Enter recipient email"
-          class="email-input"
-        />
-        <button
-          (click)="shareReport()"
-          [disabled]="!recipientEmail || isLoading"
-          class="share-btn"
-        >
-          <i class="icon-send"></i> Send
-        </button>
-      </div>
-    </div> -->
-
-
-  <!-- Reports Content -->
-
   <div class="reports-content-wrapper">
-    <!-- Admin Context Banner -->
-    <div *ngIf="isAdminView" class="admin-context-banner">
+    <div *ngIf="isSupervisoryView" class="admin-context-banner">
       <div class="admin-badge">
         <i class="icon-shield"></i>
-        Admin View
+        {{ supervisoryUser?.role }} View
       </div>
       <div class="viewing-user-info">
         <span>Viewing reports for: <strong>{{ targetUser }}</strong></span>
-        <button class="back-to-admin-btn" (click)="backToUserManagement()">
+        <button class="back-to-admin-btn" (click)="backToDashboard()">
           <i class="icon-arrow-left"></i>
-          Back to User Management
+          Back to Dashboard
         </button>
       </div>
     </div>
 
-    <!-- Header -->
     <div class="reports-header">
       <div class="header-content">
         <div class="header-text">
           <h1>
-            <span *ngIf="!isAdminView">Expense Reports & Analytics</span>
-            <span *ngIf="isAdminView">{{ targetUser }}'s Reports & Analytics</span>
+            <span *ngIf="!isSupervisoryView">Expense Reports & Analytics</span>
+            <span *ngIf="isSupervisoryView">{{ targetUser }}'s Reports & Analytics</span>
           </h1>
-          <p *ngIf="!isAdminView">Analyze your spending patterns and track financial trends</p>
-          <p *ngIf="isAdminView">Analyze {{ targetUser }}'s spending patterns and track financial trends</p>
+          <p *ngIf="!isSupervisoryView">Analyze your spending patterns and track financial trends</p>
+          <p *ngIf="isSupervisoryView">Analyze {{ targetUser }}'s spending patterns and track financial trends</p>
         </div>
         <button class="download-btn" (click)="downloadReport()" [disabled]="isLoading">
           <i class="icon-download"></i>
           Download Report
         </button>
 
-                <!-- Share Report Button -->
         <button class="email-icon-btn download-btn" (click)="isEmailModalOpen = true">
           📧 Share via Email
         </button>
 
-        <!-- Modal -->
         <div *ngIf="isEmailModalOpen" class="modal-backdrop">
           <div class="modal-content">
             <h3>📨 Share Report</h3>
@@ -129,13 +100,9 @@
             </div>
           </div>
         </div>
-
-        
-        
       </div>
     </div>
 
-    <!-- Report Period Selection -->
     <div class="period-section">
       <h2>Report Period</h2>
       <div class="preset-buttons">
@@ -148,10 +115,9 @@
         </button>
       </div>
       
-      <!-- Custom Date Range -->
       <div class="custom-range" *ngIf="activePreset === 'custom'">
         <div class="date-inputs">
-          <div class="input-group">
+          <div class.input-group>
             <label>Start Date</label>
             <input 
               type="date" 
@@ -159,7 +125,7 @@
               (change)="onCustomDateChange()"
               class="date-input">
           </div>
-          <div class="input-group">
+          <div class.input-group>
             <label>End Date</label>
             <input 
               type="date" 
@@ -171,7 +137,6 @@
       </div>
     </div>
 
-    <!-- Tab Navigation -->
     <div class="tab-navigation">
       <button 
         *ngFor="let tab of tabs"
@@ -182,22 +147,18 @@
       </button>
     </div>
 
-    <!-- Error Message -->
     <div class="error-message" *ngIf="error">
       <i class="icon-alert"></i>
       {{error}}
     </div>
 
-    <!-- Loading State -->
     <div class="loading-state" *ngIf="isLoading">
       <div class="spinner"></div>
       <p>Loading reports...</p>
     </div>
 
-    <!-- Content -->
     <div class="reports-content" *ngIf="!isLoading && !error">
       
-      <!-- Metrics Cards -->
       <div class="metrics-grid">
         <div class="metric-card total-expenses">
           <div class="metric-icon">
@@ -245,10 +206,8 @@
         </div>
       </div>
 
-      <!-- Charts Section -->
       <div class="charts-section">
         
-        <!-- Overview Tab -->
         <div *ngIf="activeTab === 'overview'" class="overview-charts">
           <div class="chart-row">
             <div class="chart-container">
@@ -266,7 +225,6 @@
           </div>
         </div>
 
-        <!-- Categories Tab -->
         <div *ngIf="activeTab === 'categories'" class="single-chart">
           <div class="chart-container large">
             <h3>Category Breakdown</h3>
@@ -287,7 +245,6 @@
           </div>
         </div>
 
-        <!-- Trends Tab -->
         <div *ngIf="activeTab === 'trends'" class="single-chart">
           <div class="chart-container large">
             <h3>Monthly Spending Trends</h3>
@@ -295,7 +252,6 @@
           </div>
         </div>
 
-        <!-- Top Expenses Tab -->
         <div *ngIf="activeTab === 'topexpenses'" class="single-chart">
           <div class="chart-container large">
             <h3>Top Expenses</h3>
@@ -316,7 +272,6 @@
           </div>
         </div>
 
-        <!-- No Data State -->
         <div *ngIf="!categoryBreakdown.length && !timeBasedData.length && !topExpenses.length" class="no-data">
           <div class="no-data-icon">📊</div>
           <h3>No Data Available</h3>

@@ -14,10 +14,17 @@ import { RoleRedirectGuard } from './role-redirect.guard';
 import { SignupComponent } from './signup/signup';
 import { Landing } from './landing/landing';
 import { OauthCallback } from './pages/oauth-callbacl/oauth-callback/oauth-callback';
+import { AnalyserHomeComponent } from './analyserComponents/homeComponent/analyser-home/analyser-home';
+import { AnalyserGuard } from './analyser.guard';
 
 export const routes: Routes = [
   // callback page for oauth
   {path:'oauth-callback',component:OauthCallback},
+  {
+    path:'analyser-home',
+    component: AnalyserHomeComponent,
+    canActivate: [authGuard, AnalyserGuard] 
+  },
   // Default route - redirect based on authentication
   { 
     path: '', 

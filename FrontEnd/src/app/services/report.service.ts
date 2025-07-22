@@ -12,7 +12,14 @@ export class ReportsService {
 
   constructor(private http: HttpClient) {}
 
-  // FIXED: Added username parameter support for quick summary
+  // Helper function to get auth headers
+  private formHeader(): HttpHeaders {
+    const token = localStorage.getItem('expense_tracker_access_token');
+    return new HttpHeaders({
+      'Authorization': `Bearer ${token}`
+    });
+  }
+
   getQuickSummary(request: QuickSummaryRequestDto, username?: string): Observable<ReportSummaryDto> {
     let params = new HttpParams();
     
@@ -20,7 +27,11 @@ export class ReportsService {
       params = params.set('username', username);
     }
 
-    return this.http.post<ReportSummaryDto>(`${this.apiUrl}/quick-summary`, request, { params })
+    // ADDED: Authorization Header
+    return this.http.post<ReportSummaryDto>(`${this.apiUrl}/quick-summary`, request, { 
+      params, 
+      headers: this.formHeader() 
+    })
       .pipe(catchError(this.handleError.bind(this)));
   }
 
@@ -33,7 +44,11 @@ export class ReportsService {
       params = params.set('username', username);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/category-breakdown`, { params })
+    // ADDED: Authorization Header
+    return this.http.get<any>(`${this.apiUrl}/category-breakdown`, { 
+      params, 
+      headers: this.formHeader() 
+    })
       .pipe(
         map((response: any): CategoryBreakdownDto[] => {
           if (response && typeof response === 'object' && response.$values) {
@@ -57,7 +72,11 @@ export class ReportsService {
       params = params.set('username', username);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/time-based`, { params })
+    // ADDED: Authorization Header
+    return this.http.get<any>(`${this.apiUrl}/time-based`, { 
+      params, 
+      headers: this.formHeader() 
+    })
       .pipe(
         map((response: any): TimeBasedReportDto[] => {
           if (response && typeof response === 'object' && response.$values) {
@@ -81,7 +100,11 @@ export class ReportsService {
       params = params.set('username', username);
     }
 
-    return this.http.get<any>(`${this.apiUrl}/top-expenses`, { params })
+    // ADDED: Authorization Header
+    return this.http.get<any>(`${this.apiUrl}/top-expenses`, { 
+      params, 
+      headers: this.formHeader() 
+    })
       .pipe(
         map((response: any): TopExpenseDto[] => {
           if (response && typeof response === 'object' && response.$values) {
@@ -144,13 +167,13 @@ export class ReportsService {
           errorMessage = error.error?.message || 'Invalid request parameters';
           break;
         case 401:
-          errorMessage = 'You are not authorized to access these reports';
+          errorMessage = 'You are not authorized to perform this action. Your session may have expired.';
           break;
         case 403:
-          errorMessage = 'You do not have permission to access this report';
+          errorMessage = 'You do not have permission to access this report.';
           break;
         case 404:
-          errorMessage = 'Report not found';
+          errorMessage = 'Report data not found for the selected user or period.';
           break;
         case 500:
           errorMessage = 'Server error. Please try again later';
@@ -163,20 +186,13 @@ export class ReportsService {
     return throwError(() => new Error(errorMessage));
   }
 
-  formHeader():HttpHeaders{
-    var token=localStorage.getItem('expense_tracker_access_token');
-
-    return new HttpHeaders({
-      'Authorization':`Bearer ${token}`
-    });
-  }
   sendReportByEmail(recipientEmail: string, lastNDays: number = 30): Observable<any> {
     return this.http.post(`${this.apiUrl}/send-summary-email`, {
       email: recipientEmail,
       lastNDays: lastNDays
-    },{headers:this.formHeader(),
-      responseType: 'text' as 'json'
+    }, { 
+      headers: this.formHeader(), // This one was already correct
+      responseType: 'text' as 'json' 
     }).pipe(catchError(this.handleError.bind(this)));
   }
-
 }

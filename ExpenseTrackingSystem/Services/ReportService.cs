@@ -8,6 +8,7 @@ namespace ExpenseTrackingSystem.Services
 {
     public class ReportService : IReportService
     {
+        // ... (no changes to constructor or other methods) ...
         private readonly IExpenseService _expenseService;
         private readonly IUserService _userService;
         private readonly IAuditLogService _auditService;
@@ -390,18 +391,26 @@ namespace ExpenseTrackingSystem.Services
                 return requestingUser;
             }
 
-            if (requestingUserData.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase))
+            // ========================= THIS IS THE FIX =========================
+            // Check if the user is an Admin OR an Analyser.
+            if (requestingUserData.Role.Equals("Admin", StringComparison.OrdinalIgnoreCase) || 
+                requestingUserData.Role.Equals("Analyser", StringComparison.OrdinalIgnoreCase))
             {
-                _logger.LogDebug("Admin user {RequestingUser} accessing data for {TargetUser}", requestingUser, targetUsername);
+                _logger.LogDebug("Privileged user ({Role}) {RequestingUser} accessing data for {TargetUser}", 
+                    requestingUserData.Role, requestingUser, targetUsername);
+                
                 var targetUserData = await _userService.GetUserByUsername(targetUsername);
                 if (targetUserData == null)
                 {
-                    _logger.LogWarning("Target user {TargetUser} not found for admin request", targetUsername);
+                    _logger.LogWarning("Target user {TargetUser} not found for privileged request", targetUsername);
                     throw new ArgumentException($"Target user '{targetUsername}' not found.");
                 }
-                _logger.LogDebug("Admin access granted for user {TargetUser}", targetUsername);
+
+                _logger.LogDebug("Privileged access granted for user {TargetUser}", targetUsername);
                 return targetUsername;
             }
+            // ======================= END OF THE FIX ========================
+
 
             if (!requestingUser.Equals(targetUsername, StringComparison.OrdinalIgnoreCase))
             {

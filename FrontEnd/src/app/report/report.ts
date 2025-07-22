@@ -1,4 +1,3 @@
-
 import { Component, ElementRef, OnDestroy, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Chart, ChartConfiguration, ChartType, registerables } from 'chart.js';
@@ -30,19 +29,17 @@ export class ReportComponent implements OnInit, OnDestroy {
   private timeChart?: Chart;
   private topExpensesChart?: Chart;
 
-  //adding recipient email 
   recipientEmail: string = '';
   isEmailModalOpen = false;
   
-
   currentUser: CurrentUser | null = null;
   isLoading = false;
   error = '';
 
-  // Admin view properties
-  isAdminView = false;
+  // CHANGE: Renamed properties for generic supervisory view
+  isSupervisoryView = false;
   targetUser = '';
-  adminUser: CurrentUser | null = null;
+  supervisoryUser: CurrentUser | null = null;
 
   activePreset = 'thisyear';
   customDateRange = {
@@ -103,28 +100,26 @@ export class ReportComponent implements OnInit, OnDestroy {
       return;
     }
 
-    // Check for admin view parameters
+    // CHANGE: Check for generic 'supervisoryView' parameter
     this.route.queryParams.pipe(takeUntil(this.destroy$)).subscribe(params => {
-      this.isAdminView = params['adminView'] === 'true';
+      this.isSupervisoryView = params['supervisoryView'] === 'true';
       this.targetUser = params['targetUser'] || '';
       
-      if (this.isAdminView) {
-        // Store the admin user separately
-        this.adminUser = this.currentUser;
+      if (this.isSupervisoryView) {
+        this.supervisoryUser = this.currentUser;
         
-        // Verify admin permissions
-        if (!this.adminUser || this.adminUser.role !== 'Admin') {
+        // CHANGE: Verify Admin or Analyser permissions
+        if (!this.supervisoryUser || (this.supervisoryUser.role !== 'Admin' && this.supervisoryUser.role !== 'Analyser')) {
           this.router.navigate(['/home']);
           return;
         }
         
-        // If no target user specified, redirect back to admin home
         if (!this.targetUser) {
-          this.router.navigate(['/admin-home']);
+          this.backToDashboard(); // Go back to the correct dashboard
           return;
         }
         
-        console.log('Admin view - Loading reports for user:', this.targetUser);
+        console.log(`${this.supervisoryUser.role} view - Loading reports for user:`, this.targetUser);
       } else {
         console.log('Regular view - Loading reports for current user:', this.currentUser?.username);
       }
@@ -139,17 +134,16 @@ export class ReportComponent implements OnInit, OnDestroy {
     this.destroy$.complete();
   }
 
-  // Check if current user is admin
   get isAdmin(): boolean {
     return this.currentUser?.role === 'Admin';
   }
 
-  // Get the username for API calls
+  // CHANGE: Now uses 'isSupervisoryView'
   get effectiveUsername(): string {
-    return this.isAdminView ? this.targetUser : (this.currentUser?.username || '');
+    return this.isSupervisoryView ? this.targetUser : (this.currentUser?.username || '');
   }
 
-  // Navigation methods (unchanged)
+  // Navigation methods
   navigateToHome(): void {
     if (this.isAdmin) {
       this.router.navigate(['/admin-home']);
@@ -174,8 +168,16 @@ export class ReportComponent implements OnInit, OnDestroy {
     this.router.navigate(['/admin-home']);
   }
 
-  backToUserManagement(): void {
-    this.router.navigate(['/admin-home']);
+  // CHANGE: New dynamic method to navigate back to the correct dashboard
+  backToDashboard(): void {
+    if (this.supervisoryUser?.role === 'Admin') {
+        this.router.navigate(['/admin-home']);
+    } else if (this.supervisoryUser?.role === 'Analyser') {
+        this.router.navigate(['/analyser-home']);
+    } else {
+        // Fallback for regular users, though they shouldn't see this button
+        this.router.navigate(['/home']);
+    }
   }
 
   onPresetChange(presetId: string): void {
@@ -210,6 +212,7 @@ export class ReportComponent implements OnInit, OnDestroy {
       console.log('Loading reports for user:', this.effectiveUsername);
       console.log('Date range:', { startDate, endDate });
 
+      // The logic for loading data remains the same as it correctly uses effectiveUsername
       if (isPreset && (this.activePreset === 'last7days' || this.activePreset === 'last90days')) {
         await this.loadPresetData(days);
       } else {
@@ -227,10 +230,7 @@ export class ReportComponent implements OnInit, OnDestroy {
     }
   }
 
-  // FIXED: Pass username parameter to service methods
   private async loadPresetData(days: number): Promise<void> {
-    // For preset data, we need to use the date range approach since 
-    // quick summary doesn't support username parameter
     const { startDate, endDate } = this.getDateRange();
     await this.loadIndividualData(startDate, endDate);
   }
@@ -238,7 +238,6 @@ export class ReportComponent implements OnInit, OnDestroy {
   private async loadCustomRangeData(startDate: string, endDate: string): Promise<void> {
     await this.loadIndividualData(startDate, endDate);
     
-    // Calculate summary from individual data
     if (this.categoryBreakdown.length > 0) {
       const totalAmount = this.categoryBreakdown.reduce((sum, cat) => sum + cat.totalAmount, 0);
       const totalCount = this.categoryBreakdown.reduce((sum, cat) => sum + cat.expenseCount, 0);
@@ -260,7 +259,6 @@ export class ReportComponent implements OnInit, OnDestroy {
         period: this.getPresetLabel()
       } as ReportSummaryDto;
     } else {
-      // No expenses found - create empty summary
       this.summary = {
         reportType: 'Custom Range Report',
         username: this.effectiveUsername,
@@ -277,12 +275,10 @@ export class ReportComponent implements OnInit, OnDestroy {
     }
   }
 
-  // FIXED: Pass username parameter to all service calls
   private async loadIndividualData(startDate: string, endDate: string): Promise<void> {
     try {
       console.log('Loading individual data for user:', this.effectiveUsername);
       
-      // Pass the username parameter to all service calls
       const [categories, timeBased, topExp] = await Promise.all([
         this.reportsService.getCategoryBreakdown(startDate, endDate, this.effectiveUsername).toPromise(),
         this.reportsService.getTimeBasedReport(startDate, endDate, 'month', this.effectiveUsername).toPromise(),
@@ -353,7 +349,6 @@ export class ReportComponent implements OnInit, OnDestroy {
       };
     }
 
-    // Default to this year
     const now = new Date();
     return {
       startDate: this.reportsService.formatDate(new Date(now.getFullYear(), 0, 1)),
@@ -404,7 +399,6 @@ export class ReportComponent implements OnInit, OnDestroy {
       this.topCategoryAmount = 0;
     }
 
-    // Additional check for empty data state
     if (this.totalExpenses === 0) {
       this.topCategory = 'No expenses present';
       this.topCategoryAmount = 0;
@@ -635,16 +629,14 @@ export class ReportComponent implements OnInit, OnDestroy {
         dateRange: this.dateRangeText
       },
       generatedAt: new Date().toISOString(),
-      viewedBy: this.isAdminView ? this.adminUser?.username : this.currentUser?.username,
-      targetUser: this.isAdminView ? this.targetUser : this.currentUser?.username
+      // CHANGE: Use generic properties
+      viewedBy: this.isSupervisoryView ? this.supervisoryUser?.username : this.currentUser?.username,
+      targetUser: this.isSupervisoryView ? this.targetUser : this.currentUser?.username
     };
 
-    const filename = `expense-report-${this.isAdminView ? this.targetUser : 'personal'}-${this.activePreset}-${new Date().toISOString().split('T')[0]}`;
+    const filename = `expense-report-${this.isSupervisoryView ? this.targetUser : 'personal'}-${this.activePreset}-${new Date().toISOString().split('T')[0]}`;
     this.reportsService.downloadReportAsJSON(reportData, filename);
   }
-
-
-  // added shareReport function
 
   shareReport(): void {
     if (!this.recipientEmail) {
@@ -675,6 +667,7 @@ export class ReportComponent implements OnInit, OnDestroy {
       }
     });
   }
+  
   logout(): void {
     this.authService.logout();
   }

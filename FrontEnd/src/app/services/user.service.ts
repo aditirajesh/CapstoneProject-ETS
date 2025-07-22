@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { environment } from "../../environments/environment.prod";
 import { BehaviorSubject, catchError, Observable, tap, throwError } from "rxjs";
 import { User } from "../models/UserModel";
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse, HttpHeaders, HttpParams } from '@angular/common/http';
 import { UserAddRequestDto, UserUpdateRequestDto } from "../models/UserDTOs";
 import { UserSearchModel } from "../models/UserSearchModel";
 import { ApiError } from "../models/ApiResponse";
@@ -18,6 +18,26 @@ export class UserService {
 
     constructor(private http:HttpClient) {
 
+    }
+
+    formHeader():HttpHeaders{
+        var token=localStorage.getItem('expense_tracker_access_token');
+
+        return new HttpHeaders({
+        'Authorization':`Bearer ${token}`
+        });
+    }
+    // Assign Analyser Role
+    assignAnalyserRole(username: string): Observable<User> {
+        console.log(`UserService: Assigning Analyser role to user: ${username}`);
+        const url = `${this.apiUrl}/${username}/assign-analyser`;
+        return this.http.put<User>(url, {},{headers:this.formHeader()}) // Empty body for this PUT request
+        .pipe(
+            tap((updatedUser: User) => {
+                console.log(`UserService: Successfully assigned Analyser role to: ${updatedUser.username}`);
+            }),
+            catchError(this.handleError.bind(this))
+        );
     }
 
     //createuser

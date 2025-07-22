@@ -1,6 +1,4 @@
-<!-- admin-home.component.html -->
 <div class="admin-home-container">
-  <!-- Create User Modal -->
   <div class="modal-overlay" *ngIf="showCreateUserModal" (click)="closeCreateUserModal()">
     <div class="modal-container" (click)="$event.stopPropagation()">
       <div class="modal-header">
@@ -78,8 +76,9 @@
             #roleInput="ngModel"
             required
           >
-            <option value="">Select role</option>
+            <option value="" disabled>Select role</option>
             <option value="User">User</option>
+            <option value="Analyser">Analyser</option>
             <option value="Admin">Admin</option>
           </select>
           <div class="form-error" *ngIf="roleInput.invalid && roleInput.touched">
@@ -102,15 +101,13 @@
             [disabled]="createUserForm.invalid || isCreatingUser"
           >
             <div class="btn-spinner-small" *ngIf="isCreatingUser"></div>
-            <span *ngIf="!isCreatingUser">Create User</span>
-            <span *ngIf="isCreatingUser">Creating...</span>
+            <span>{{ isCreatingUser ? 'Creating...' : 'Create User' }}</span>
           </button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- Header Navigation -->
   <header class="header">
     <nav class="nav-container">
       <div class="nav-left">
@@ -139,120 +136,8 @@
     </nav>
   </header>
 
-  <!-- Create User Modal -->
-  <div class="modal-overlay" *ngIf="showCreateUserModal" (click)="closeCreateUserModal()">
-    <div class="modal-container" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h3 class="modal-title">Create New User</h3>
-        <button class="modal-close-btn" (click)="closeCreateUserModal()">
-          <i class="icon-close"></i>
-        </button>
-      </div>
-      
-      <form class="modal-form" (ngSubmit)="submitCreateUser()" #createUserForm="ngForm">
-        <div class="form-group">
-          <label for="newUsername" class="form-label">Username *</label>
-          <input 
-            type="text" 
-            id="newUsername"
-            name="newUsername"
-            class="form-input"
-            [(ngModel)]="newUser.username"
-            #usernameInput="ngModel"
-            required
-            minlength="3"
-            placeholder="Enter username"
-          >
-          <div class="form-error" *ngIf="usernameInput.invalid && usernameInput.touched">
-            <span *ngIf="usernameInput.errors?.['required']">Username is required</span>
-            <span *ngIf="usernameInput.errors?.['minlength']">Username must be at least 3 characters</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="newPhone" class="form-label">Phone Number *</label>
-          <input 
-            type="tel" 
-            id="newPhone"
-            name="newPhone"
-            class="form-input"
-            [(ngModel)]="newUser.phone"
-            #phoneInput="ngModel"
-            required
-            pattern="[0-9]{10}"
-            placeholder="Enter 10-digit phone number"
-          >
-          <div class="form-error" *ngIf="phoneInput.invalid && phoneInput.touched">
-            <span *ngIf="phoneInput.errors?.['required']">Phone number is required</span>
-            <span *ngIf="phoneInput.errors?.['pattern']">Phone number must be 10 digits</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="newPassword" class="form-label">Password *</label>
-          <input 
-            type="password" 
-            id="newPassword"
-            name="newPassword"
-            class="form-input"
-            [(ngModel)]="newUser.password"
-            #passwordInput="ngModel"
-            required
-            minlength="6"
-            placeholder="Enter password"
-          >
-          <div class="form-error" *ngIf="passwordInput.invalid && passwordInput.touched">
-            <span *ngIf="passwordInput.errors?.['required']">Password is required</span>
-            <span *ngIf="passwordInput.errors?.['minlength']">Password must be at least 6 characters</span>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="newRole" class="form-label">Role *</label>
-          <select 
-            id="newRole"
-            name="newRole"
-            class="form-select"
-            [(ngModel)]="newUser.role"
-            #roleInput="ngModel"
-            required
-          >
-            <option value="">Select role</option>
-            <option value="User">User</option>
-            <option value="Admin">Admin</option>
-          </select>
-          <div class="form-error" *ngIf="roleInput.invalid && roleInput.touched">
-            <span *ngIf="roleInput.errors?.['required']">Role is required</span>
-          </div>
-        </div>
-
-        <div class="modal-actions">
-          <button 
-            type="button" 
-            class="modal-btn modal-cancel-btn" 
-            (click)="closeCreateUserModal()"
-            [disabled]="isCreatingUser"
-          >
-            Cancel
-          </button>
-          <button 
-            type="submit" 
-            class="modal-btn modal-submit-btn"
-            [disabled]="createUserForm.invalid || isCreatingUser"
-          >
-            <div class="btn-spinner-small" *ngIf="isCreatingUser"></div>
-            <span *ngIf="!isCreatingUser">Create User</span>
-            <span *ngIf="isCreatingUser">Creating...</span>
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Main Content -->
   <main class="main-content">
     
-    <!-- Header Section -->
     <div class="page-header">
       <div class="header-content">
         <h1 class="page-title">
@@ -269,7 +154,6 @@
       </div>
     </div>
 
-    <!-- Statistics Cards -->
     <div class="stats-grid">
       <div class="stat-card">
         <div class="stat-icon users-icon">
@@ -288,6 +172,16 @@
         <div class="stat-info">
           <div class="stat-number">{{ totalAdmins }}</div>
           <div class="stat-label">Administrators</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon analyser-icon">
+          <i class="icon-award"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ totalAnalysers }}</div>
+          <div class="stat-label">Analysers</div>
         </div>
       </div>
       
@@ -312,12 +206,10 @@
       </div>
     </div>
 
-    <!-- User Management Section -->
     <div class="users-section">
       <div class="section-header">
         <h2 class="section-title">User Management</h2>
         
-        <!-- Search Bar -->
         <div class="search-container">
           <div class="search-input-wrapper">
             <i class="icon-search search-icon"></i>
@@ -344,16 +236,13 @@
         </div>
       </div>
 
-      <!-- Users Table -->
       <div class="users-table-container">
         
-        <!-- Loading State -->
         <div class="loading-container" *ngIf="isLoadingUsers">
           <div class="loading-spinner"></div>
           <p>Loading users...</p>
         </div>
 
-        <!-- No Users State -->
         <div class="no-data-container" *ngIf="showNoUsers">
           <div class="no-data-icon">
             <i class="icon-users"></i>
@@ -362,7 +251,6 @@
           <p>There are no users in the system yet.</p>
         </div>
 
-        <!-- No Search Results State -->
         <div class="no-data-container" *ngIf="showNoResults">
           <div class="no-data-icon">
             <i class="icon-search"></i>
@@ -374,7 +262,6 @@
           </button>
         </div>
 
-        <!-- Users Table -->
         <div class="table-wrapper" *ngIf="hasUsers && !isLoadingUsers">
           <table class="users-table">
             <thead>
@@ -441,6 +328,16 @@
                     >
                       <i class="icon-reports"></i>
                     </button>
+
+                    <button 
+                      *ngIf="user.role === 'User'"
+                      class="action-btn assign-btn" 
+                      (click)="assignAnalyserRole(user.username)"
+                      [disabled]="isAssigningRole === user.username"
+                      title="Assign Analyser Role">
+                      <div class="btn-spinner-small" *ngIf="isAssigningRole === user.username"></div>
+                      <i class="bi bi-award-fill" *ngIf="isAssigningRole !== user.username"></i>
+                    </button>
                     
                     <button 
                       class="action-btn delete-btn"
@@ -458,7 +355,6 @@
           </table>
         </div>
 
-        <!-- Pagination -->
         <div class="pagination-container" *ngIf="hasUsers && !isLoadingUsers && !searchQuery">
           <div class="pagination-info">
             {{ paginationInfo }}

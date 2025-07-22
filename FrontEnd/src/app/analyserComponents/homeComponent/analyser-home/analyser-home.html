@@ -1,0 +1,160 @@
+<div class="analyser-home-container">
+  <header class="header">
+    <nav class="nav-container">
+      <!-- UPDATED: Combined navigation for Analyser -->
+      <div class="nav-left">
+        <a routerLink="/analyser-home" class="nav-item active">
+          <i class="icon-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+        <a routerLink="/expenses" class="nav-item" (click)="navigateToMyExpenses()">
+          <i class="icon-expenses"></i>
+          <span>My Expenses</span>
+        </a>
+        <a routerLink="/reports" class="nav-item" (click)="navigateToMyReports()">
+          <i class="icon-reports"></i>
+          <span>My Reports</span>
+        </a>
+        <a routerLink="/profile" class="nav-item" (click)="navigateToProfile()">
+          <i class="icon-profile"></i>
+          <span>Profile</span>
+        </a>
+      </div>
+      
+      <div class="nav-right">
+        <button class="notification-btn">
+          <i class="icon-bell"></i>
+        </button>
+        <button class="logout-btn" (click)="logout()">
+          Logout
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <main class="main-content">
+    <div class="page-header">
+      <div class="header-content">
+        <h1 class="page-title">
+          Welcome back, <span class="analyser-name">{{ displayUsername }}</span>
+        </h1>
+        <p class="page-subtitle">Review user spending patterns and provide analysis</p>
+      </div>
+      
+      <div class="header-actions">
+        <button class="refresh-btn" (click)="refreshUsers()" [disabled]="isLoading">
+          <i class="icon-refresh" [class.spinning]="isLoading"></i>
+          <span>Refresh</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon users-icon">
+          <i class="icon-users"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ totalUsersToAnalyse }}</div>
+          <div class="stat-label">Users to Analyse</div>
+        </div>
+      </div>
+      
+      <div class="stat-card">
+        <div class="stat-icon recent-icon">
+          <i class="icon-clock"></i>
+        </div>
+        <div class="stat-info">
+          <div class="stat-number">{{ recentlyJoinedUsers }}</div>
+          <div class="stat-label">New Users (7 days)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="users-section">
+      <div class="section-header">
+        <h2 class="section-title">User Directory</h2>
+        <div class="search-container">
+          <div class="search-input-wrapper">
+            <i class="icon-search search-icon"></i>
+            <input 
+              type="text" 
+              class="search-input"
+              placeholder="Search by username..."
+              [(ngModel)]="searchQuery"
+              (input)="onSearchInputChange()"
+            >
+            <button class="clear-search-btn" *ngIf="searchQuery" (click)="clearSearch()">
+              <i class="icon-close"></i>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="users-table-container">
+        <div class="loading-container" *ngIf="isLoading">
+          <div class="loading-spinner"></div>
+          <p>Loading users...</p>
+        </div>
+
+        <div class="no-data-container" *ngIf="!isLoading && filteredUsers.length === 0">
+          <div class="no-data-icon"><i class="icon-search"></i></div>
+          <h3 *ngIf="searchQuery">No Results Found</h3>
+          <h3 *ngIf="!searchQuery">No Users Available</h3>
+          <p *ngIf="searchQuery">No users match your search for "{{ searchQuery }}"</p>
+          <p *ngIf="!searchQuery">There are no users available for analysis.</p>
+          <button class="clear-search-btn-alt" *ngIf="searchQuery" (click)="clearSearch()">
+            Clear Search
+          </button>
+        </div>
+
+        <div class="table-wrapper" *ngIf="!isLoading && filteredUsers.length > 0">
+          <table class="users-table">
+            <thead>
+              <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Last Active</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let user of filteredUsers; trackBy: trackByUsername" class="user-row">
+                <td class="user-info-cell">
+                  <div class="user-info">
+                    <div class="user-avatar">
+                      {{ user.username.charAt(0).toUpperCase() }}
+                    </div>
+                    <div class="user-details">
+                      <div class="username">{{ user.username }}</div>
+                      <div class="user-status" [class.online]="isUserOnline(user.updatedAt)">
+                        {{ isUserOnline(user.updatedAt) ? 'Online' : 'Offline' }}
+                      </div>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <span [class]="getUserRoleBadgeClass(user.role)">
+                    {{ user.role }}
+                  </span>
+                </td>
+                <td class="joined-cell">
+                  {{ formatJoinDate(user.createdAt) }}
+                </td>
+                <td class="last-seen-cell">
+                  {{ formatLastSeen(user.updatedAt.toString()) }}
+                </td>
+                <td class="actions-cell">
+                  <button class="action-btn view-btn" (click)="navigateToUserReports(user.username)" title="View user reports">
+                    <i class="icon-reports"></i> <span>View Reports</span>
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
