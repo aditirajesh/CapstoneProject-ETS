@@ -9,6 +9,8 @@ import { AuthService } from '../services/auth.service';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
+import { SuggestionService } from '../services/suggestion-service';
+import { SuggestionAddDto } from '../models/SuggestionDTOs';
 
 Chart.register(...registerables);
 
@@ -85,13 +87,18 @@ export class ReportComponent implements OnInit, OnDestroy {
     ]
   };
 
+  
+   isSuggestionModalOpen = false;
+  newSuggestionContent = '';
+  isSubmittingSuggestion = false;
+
   constructor(
     private reportsService: ReportsService,
+    private suggestionService: SuggestionService, 
     public authService: AuthService,
     private route: ActivatedRoute,
     private router: Router
   ) {}
-
   ngOnInit(): void {
     this.currentUser = this.authService.getCurrentUser();
     
@@ -667,8 +674,97 @@ export class ReportComponent implements OnInit, OnDestroy {
       }
     });
   }
+
+  formatDate(date: Date): string {
+    return date.toISOString();
+  }
   
+  
+  openSuggestionModal(): void {
+    this.newSuggestionContent = '';
+    this.isSuggestionModalOpen = true;
+  }
+
+  closeSuggestionModal(): void {
+    this.isSuggestionModalOpen = false;
+  }
+
+  submitSuggestion(): void {
+    if (!this.newSuggestionContent.trim() || !this.isSupervisoryView) {
+      return;
+    }
+
+    this.isSubmittingSuggestion = true;
+    const { startDate, endDate } = this.getDateRange1();
+
+    const suggestionDto: SuggestionAddDto = {
+      targetUsername: this.targetUser,
+      content: this.newSuggestionContent,
+      reportPeriodStart: startDate,
+      reportPeriodEnd: endDate
+    };
+
+    this.suggestionService.addSuggestion(suggestionDto).subscribe({
+      next: () => {
+        this.isSubmittingSuggestion = false;
+        alert('Suggestion submitted successfully!');
+        this.closeSuggestionModal();
+      },
+      error: (err) => {
+        this.isSubmittingSuggestion = false;
+        console.error('Failed to submit suggestion', err);
+        alert(`Error: ${err.message}`);
+      }
+    });
+  }
   logout(): void {
     this.authService.logout();
+  }
+
+  private getDateRange1(): { startDate: string, endDate: string } {
+    if (this.activePreset === 'custom') {
+      const startDate = new Date(this.customDateRange.startDate);
+      const endDate = new Date(this.customDateRange.endDate);
+      endDate.setHours(23, 59, 59, 999); // Ensure the full end day is included
+
+      return {
+        startDate: this.formatDate(startDate),
+        endDate: this.formatDate(endDate),
+      };
+    }
+
+    const preset = this.presets.find(p => p.id === this.activePreset);
+    const now = new Date();
+    let startDate = new Date();
+    let endDate = new Date(now);
+    endDate.setHours(23, 59, 59, 999); // Set to end of day by default
+
+    switch(preset?.id) {
+        case 'currentmonth':
+            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
+            break;
+        case 'thisyear':
+            startDate = new Date(now.getFullYear(), 0, 1);
+            startDate.setHours(0, 0, 0, 0);
+            break;
+        case 'last7days':
+        case 'last90days':
+            startDate.setDate(now.getDate() - (preset.days - 1));
+            startDate.setHours(0, 0, 0, 0);
+            break;
+        default: // Default to this year if something is wrong
+            startDate = new Date(now.getFullYear(), 0, 1);
+            startDate.setHours(0, 0, 0, 0);
+            break;
+    }
+
+    return {
+      startDate: this.formatDate(startDate),
+      endDate: this.formatDate(endDate),
+    };
+  }
+  formatDate1(date: Date): string {
+    return date.toISOString();
   }
 }

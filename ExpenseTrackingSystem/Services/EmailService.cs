@@ -21,11 +21,11 @@ public class EmailService : IEmailService
         {
             using var message = new MailMessage
             {
-                From = new MailAddress(_configuration["Smtp:Username"]), 
+                From = new MailAddress(_configuration["Smtp:Username"]),
                 Body = body,
                 IsBodyHtml = false
             };
-            message.To.Add(new MailAddress(recipientEmail)); 
+            message.To.Add(new MailAddress(recipientEmail));
 
 
             if (attachment != null && !string.IsNullOrEmpty(attachmentName))
@@ -40,7 +40,7 @@ public class EmailService : IEmailService
                 Port = int.Parse(_configuration["Smtp:Port"]),
                 EnableSsl = true,
                 Credentials = new NetworkCredential(
-                    _configuration["Smtp:Username"], 
+                    _configuration["Smtp:Username"],
                     _configuration["Smtp:Password"])
             };
 
@@ -50,6 +50,55 @@ public class EmailService : IEmailService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to send email to {Recipient}", recipientEmail);
+            throw;
+        }
+    }
+    
+    public async Task SendSuggestionEmailAsync(string recipientEmail, string analyserUsername, string suggestionContent, string reportPeriod)
+    {
+        _logger.LogInformation("Preparing to send suggestion email to {Recipient} from {Analyser}", recipientEmail, analyserUsername);
+        try
+        {
+            var subject = $"New Suggestion from Your Expense Analyser";
+            var body = $"""
+            Hello,
+
+            You have received a new suggestion from your expense analyser, {analyserUsername}, regarding your expenses for the period: {reportPeriod}.
+
+            Suggestion:
+            "{suggestionContent}"
+
+            You can view this and other suggestions by logging into the application.
+
+            Thanks,
+            The Expense Tracker Team
+            """;
+
+            using var message = new MailMessage
+            {
+                From = new MailAddress(_configuration["Smtp:Username"]),
+                Subject = subject,
+                Body = body,
+                IsBodyHtml = false,
+            };
+            message.To.Add(new MailAddress(recipientEmail));
+
+            var smtpClient = new SmtpClient
+            {
+                Host = _configuration["Smtp:Host"],
+                Port = int.Parse(_configuration["Smtp:Port"]),
+                EnableSsl = true,
+                Credentials = new NetworkCredential(
+                    _configuration["Smtp:Username"],
+                    _configuration["Smtp:Password"])
+            };
+
+            await smtpClient.SendMailAsync(message);
+            _logger.LogInformation("Suggestion email sent successfully to {Recipient}", recipientEmail);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to send suggestion email to {Recipient}", recipientEmail);
             throw;
         }
     }

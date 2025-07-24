@@ -67,10 +67,17 @@
           <p *ngIf="!isSupervisoryView">Analyze your spending patterns and track financial trends</p>
           <p *ngIf="isSupervisoryView">Analyze {{ targetUser }}'s spending patterns and track financial trends</p>
         </div>
+        <button 
+              *ngIf="isSupervisoryView && currentUser?.role === 'Analyser'"
+              class="action-btn suggestion-btn download-btn" 
+              (click)="openSuggestionModal()">
+              ✍️ Add Suggestion
+          </button>
         <button class="download-btn" (click)="downloadReport()" [disabled]="isLoading">
           <i class="icon-download"></i>
           Download Report
         </button>
+        
 
         <button class="email-icon-btn download-btn" (click)="isEmailModalOpen = true">
           📧 Share via Email
@@ -102,6 +109,32 @@
         </div>
       </div>
     </div>
+    <div *ngIf="isSuggestionModalOpen" class="modal-backdrop" (click)="closeSuggestionModal()">
+          <div class="modal-content" (click)="$event.stopPropagation()">
+            <h3>✍️ Add Suggestion for {{ targetUser }}</h3>
+            <p class="modal-subtitle">Your suggestion will be saved and an email notification will be sent to the user.</p>
+            
+            <textarea 
+              [(ngModel)]="newSuggestionContent"
+              class="suggestion-textarea"
+              placeholder="e.g., 'Consider consolidating your food expenses...' "
+              rows="6"
+            ></textarea>
+
+            <div class="modal-actions">
+              <button class="cancel-btn" (click)="closeSuggestionModal()" [disabled]="isSubmittingSuggestion">
+                Cancel
+              </button>
+              <button 
+                class="submit-btn" 
+                (click)="submitSuggestion()" 
+                [disabled]="!newSuggestionContent.trim() || isSubmittingSuggestion">
+                {{ isSubmittingSuggestion ? 'Submitting...' : 'Submit Suggestion' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
 
     <div class="period-section">
       <h2>Report Period</h2>

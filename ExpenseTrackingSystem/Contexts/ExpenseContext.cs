@@ -14,6 +14,8 @@ namespace ExpenseTrackingSystem.Contexts
         public DbSet<Expense> Expenses { get; set; }
         public DbSet<Receipt> Receipts { get; set; }
         public DbSet<AuditLog> AuditLogs { get; set; }
+        
+        public DbSet<Suggestion> Suggestions { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -24,13 +26,13 @@ namespace ExpenseTrackingSystem.Contexts
                 .WithMany(u => u.Expenses)
                 .HasForeignKey(e => e.Username)
                 .HasConstraintName("FK_Expense_User")
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Receipt>().HasOne(r => r.User)
                 .WithMany(u => u.Receipts)
                 .HasForeignKey(r => r.Username)
                 .HasConstraintName("FK_Receipt_User")
-                .OnDelete(DeleteBehavior.Cascade); 
+                .OnDelete(DeleteBehavior.Cascade);
 
             modelBuilder.Entity<Receipt>().HasOne(r => r.Expense)
                 .WithOne(e => e.Receipt)
@@ -43,7 +45,7 @@ namespace ExpenseTrackingSystem.Contexts
                 .WithMany()
                 .HasForeignKey(a => a.Username)
                 .HasConstraintName("FK_AuditLog_User")
-                .OnDelete(DeleteBehavior.Restrict); 
+                .OnDelete(DeleteBehavior.Restrict);
 
 
             modelBuilder.Entity<Expense>()
@@ -55,6 +57,20 @@ namespace ExpenseTrackingSystem.Contexts
                 .Property(r => r.Username)
                 .IsRequired()
                 .HasMaxLength(100);
+
+            modelBuilder.Entity<Suggestion>()
+                .HasOne<User>() // A suggestion is for one user
+                .WithMany()     // A user can receive many suggestions
+                .HasForeignKey(s => s.TargetUsername)
+                .HasConstraintName("FK_Suggestion_TargetUser")
+                .OnDelete(DeleteBehavior.Cascade); 
+
+            modelBuilder.Entity<Suggestion>()
+                .HasOne<User>() // A suggestion is written by one user (Analyser)
+                .WithMany()     // A user can write many suggestions
+                .HasForeignKey(s => s.AnalyserUsername)
+                .HasConstraintName("FK_Suggestion_AnalyserUser")
+                .OnDelete(DeleteBehavior.Restrict); 
         }
     }
 }
